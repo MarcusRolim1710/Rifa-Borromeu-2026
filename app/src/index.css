@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,6 +8,27 @@
   color-scheme: light;
 }
 
-* {
-  font-variant-ligatures: common-ligatures;
+html {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #fdf8f4;
+}
+
+.font-display {
+  font-family: 'Fraunces', serif;
+}
+
+/* focus */
+*:focus-visible {
+  outline: 2px solid #7a2330;
+  outline-offset: 2px;
+}
+
+/* scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #d6c7c9;
+  border-radius: 999px;
 }
