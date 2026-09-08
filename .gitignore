@@ -1,0 +1,20 @@
+# deps
+node_modules/
+dist/
+build/
+.agents/skills/
+# env
+.env
+.env.local
+.env.*.local
+# supabase
+.supabase/
+# os
+.DS_Store
+Thumbs.db
+# vite
+.vite/
+# vercel
+.vercel/
+# secrets - nunca commitar keys
+opencode.json
