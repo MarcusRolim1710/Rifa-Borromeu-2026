@@ -3,6 +3,7 @@ import { useAuth } from '../store/auth'
 import {
   useCartelas,
   useCreateCartelasLote,
+  useDevolverDireto,
   useEdition,
   useProfiles,
   useSales,
@@ -22,6 +23,7 @@ export default function Cartelas() {
   const createLote = useCreateCartelasLote()
   const requestDev = useRequestDevolucao()
   const resolveDev = useResolveDevolucao()
+  const devolverDireto = useDevolverDireto()
 
   const [sellerId, setSellerId] = useState('')
   const [startStr, setStartStr] = useState('')
@@ -94,8 +96,20 @@ export default function Cartelas() {
       setEndStr('')
     } catch (e2: unknown) {
       const msg = e2 instanceof Error ? e2.message : String(e2)
-      if (msg.includes('no_overlap') || msg.includes('exclude')) setErr(`Range ${s}-${e} conflita com cartela existente (verifique buracos)`)
-      else setErr(msg)
+      if (msg.includes('no_overlap') || msg.includes('exclude')) {
+        // Opção A: identifica fatia conflitante e lista buracos disponíveis
+        const active = cartelas.filter((c) => c.status !== 'devolvido')
+        let conflict: { start: number; end: number; seller: string } | null = null
+        for (let cs = s; cs <= e; cs += 20) {
+          const ce = cs + 19
+          const hit = active.find((c) => !(ce < c.start || cs > c.end))
+          if (hit) { conflict = { start: cs, end: ce, seller: hit.seller }; break }
+        }
+        const gapsTxt = allGaps.length ? ` Buracos disponíveis: ${allGaps.map((g) => `${g.start}—${g.end}`).join(', ')}.` : ''
+        const nextTxt = placeholderInfo ? ` ${placeholderInfo}.` : ''
+        if (conflict) setErr(`Conflita com cartela ${conflict.start}—${conflict.end} de ${conflict.seller} (fatia ${conflict.start}—${conflict.end} já alocada).${gapsTxt}${nextTxt}`)
+        else setErr(`Range ${s}—${e} conflita com cartela existente.${gapsTxt}${nextTxt}`)
+      } else setErr(msg)
     }
   }
 
@@ -318,6 +332,20 @@ export default function Cartelas() {
                   <button onClick={() => resolveDev.mutate({ id: c.id, accept: true })} disabled={resolveDev.isPending} className="btn btn-primary btn-sm">Aceitar devolução</button>
                   <button onClick={() => resolveDev.mutate({ id: c.id, accept: false })} disabled={resolveDev.isPending} className="btn btn-ghost btn-sm">Recusar</button>
                 </div>
+              ) : c.status === 'alocado' && c.sellerId === profile?.id && c.vendas === 0 ? (
+                <button
+                  onClick={async () => {
+                    if (!confirm(`Devolver cartela ${c.start}—${c.end} ao POTE? Ela ficará disponível para atribuir novamente.`)) return
+                    try { await devolverDireto.mutateAsync(c.id) } catch (e) { alert(e instanceof Error ? e.message : String(e)) }
+                  }}
+                  disabled={devolverDireto.isPending}
+                  className="btn btn-ghost btn-sm self-start"
+                  style={{ border: '1px solid var(--border)' }}
+                >
+                  Devolver ao POTE
+                </button>
+              ) : c.status === 'alocado' && c.vendas > 0 ? (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full self-start" style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>Contém {c.vendas} venda(s) — não pode devolver</span>
               ) : (
                 <span className="text-xs self-start" style={{ color: 'var(--muted)' }}>{c.vendas} vendidos</span>
               )}

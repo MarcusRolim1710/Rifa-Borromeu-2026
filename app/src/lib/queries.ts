@@ -174,6 +174,23 @@ export function useResolveDevolucao() {
   })
 }
 
+export function useDevolverDireto() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { count, error: cntErr } = await supabase.from('sales').select('id', { count: 'exact', head: true }).eq('cartela_id', id)
+      if (cntErr) throw cntErr
+      if ((count ?? 0) > 0) throw new Error('Cartela com vendas não pode ser devolvida')
+      const { data, error } = await supabase.from('cartelas').update({ status: 'devolvido', solicitado_por: null, solicitado_em: null }).eq('id', id).eq('status', 'alocado').select().single()
+      if (error) throw error
+      if (!data) throw new Error('Cartela não encontrada ou não está em status alocado')
+      return data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cartelas'] }),
+  })
+}
+
 export function useCreateSale() {
   const qc = useQueryClient()
   return useMutation({
