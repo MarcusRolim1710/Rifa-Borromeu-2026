@@ -15,7 +15,11 @@ function Protected({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useAuth()
   if (loading) return <div className="min-h-screen grid place-items-center text-stone-500">Carregando...</div>
   if (!profile) return <Navigate to="/login" replace />
-  return <Layout>{children}</Layout>
+  return (
+    <QueryClientProvider client={qc}>
+      <Layout>{children}</Layout>
+    </QueryClientProvider>
+  )
 }
 
 function Fallback() {
@@ -24,20 +28,18 @@ function Fallback() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={qc}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Suspense fallback={<Fallback />}>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Protected><Dashboard /></Protected>} />
-              <Route path="/cartelas" element={<Protected><Cartelas /></Protected>} />
-              <Route path="/vendas" element={<Protected><Vendas /></Protected>} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </AuthProvider>
-    </QueryClientProvider>
+    <AuthProvider>
+      <BrowserRouter>
+        <Suspense fallback={<Fallback />}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Protected><Dashboard /></Protected>} />
+            <Route path="/cartelas" element={<Protected><Cartelas /></Protected>} />
+            <Route path="/vendas" element={<Protected><Vendas /></Protected>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }

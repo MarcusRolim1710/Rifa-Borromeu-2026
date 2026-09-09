@@ -41,11 +41,9 @@ export default function Login() {
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(180deg, oklch(14% 0.03 270 / 35%) 0%, oklch(14% 0.03 270 / 10%) 35%, oklch(97.5% 0.015 75 / 88%) 88%, var(--bg) 100%)',
+            background: 'linear-gradient(180deg, oklch(14% 0.03 270 / 28%) 0%, oklch(14% 0.03 270 / 8%) 35%, oklch(97.5% 0.015 75 / 78%) 88%, var(--bg) 100%)',
           }}
         />
-        {/* blur leve geral */}
-        <div className="absolute inset-0 backdrop-blur-[1.5px]" style={{ opacity: 0.5 }} />
       </div>
 
       {/* painel login - glass spec  */}
@@ -53,11 +51,11 @@ export default function Login() {
         <div
           className="p-7 md:p-8 shadow-2xl"
           style={{
-            background: 'color-mix(in oklch, var(--surface) 92%, transparent)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid color-mix(in oklch, white 45%, transparent)',
+            background: 'color-mix(in oklch, var(--surface) 96%, transparent)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid color-mix(in oklch, white 35%, transparent)',
             borderRadius: '20px',
-            boxShadow: '0 16px 40px oklch(14% 0.03 270 / 18%)',
+            boxShadow: '0 12px 28px oklch(14% 0.03 270 / 12%)',
           }}
         >
           <div className="flex items-center gap-3 mb-1">

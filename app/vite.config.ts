@@ -3,6 +3,26 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  build: {
+    target: 'es2020',
+    cssMinify: true,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('jspdf') || id.includes('html2canvas')) return 'pdf'
+            if (id.includes('@supabase')) return 'supabase'
+            if (id.includes('@tanstack')) return 'query'
+            if (id.includes('react-router')) return 'router'
+            if (id.includes('react-dom') || id.includes('react/')) return 'react'
+            if (id.includes('purify')) return 'purify'
+            return 'vendor'
+          }
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({
