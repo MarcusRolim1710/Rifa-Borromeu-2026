@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../store/auth'
-import { exportVendasPdf } from '../lib/pdf'
 import { useCartelas, useEdition, useSales } from '../lib/queries'
 
 export default function Dashboard() {
@@ -53,7 +52,8 @@ export default function Dashboard() {
   }, [cartelasAtivas, isAdmin, profile?.id])
   const kpiPontosAtribuidos = kpiCartelas * 20
 
-  function handlePdf() {
+  async function handlePdf() {
+    const { exportVendasPdf } = await import('../lib/pdf')
     exportVendasPdf(
       sales.map((s) => ({
         numero: s.number,

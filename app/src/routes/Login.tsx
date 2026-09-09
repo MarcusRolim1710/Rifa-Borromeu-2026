@@ -22,14 +22,22 @@ export default function Login() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 md:p-6" style={{ background: 'var(--night-2)' }}>
-      {/* fundo capela - hero spec */}
+      {/* fundo capela - hero LCP otimizado */}
       <div className="absolute inset-0 overflow-hidden">
-        <img
-          src="/backgroud-capela.png"
-          alt="Capela de madeira iluminada sob céu estrelado"
-          className="h-full w-full object-cover"
-          style={{ objectPosition: 'center 35%', opacity: 0.92 }}
-        />
+        <picture>
+          <source type="image/webp" srcSet="/backgroud-capela-640.webp 640w, /backgroud-capela-800.webp 800w, /backgroud-capela-1122.webp 1122w" sizes="100vw" />
+          <img
+            src="/backgroud-capela.jpg"
+            alt="Capela de madeira iluminada sob céu estrelado"
+            className="h-full w-full object-cover"
+            style={{ objectPosition: 'center 35%', opacity: 0.92 }}
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            width={1122}
+            height={1402}
+          />
+        </picture>
         <div
           className="absolute inset-0"
           style={{

@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icons.svg', 'backgroud-capela.png'],
+      includeAssets: ['favicon.svg', 'icons.svg', 'backgroud-capela-640.webp', 'backgroud-capela-800.webp', 'backgroud-capela-1122.webp', 'backgroud-capela.jpg'],
       manifest: {
         name: 'Rifa Borromeu 2026',
         short_name: 'Borromeu',
@@ -25,7 +25,7 @@ export default defineConfig({
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 5000000,
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,webp,jpg,woff2}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
