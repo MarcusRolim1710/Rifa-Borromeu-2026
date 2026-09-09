@@ -36,7 +36,7 @@ export default function Vendas() {
       <div className="flex items-baseline justify-between gap-4">
         <div>
           <h1 className="font-display font-black text-2xl text-stone-900">{isAdmin ? 'Todas vendas' : 'Minhas vendas'}</h1>
-          <p className="text-sm text-stone-500">R$10 por ponto · nome+cell obrigatórios</p>
+          <p className="text-sm text-stone-500">Nome e sobrenome + cell obrigatórios</p>
         </div>
         <span className="hidden sm:inline-flex text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full bg-white border border-stone-200 text-stone-600">{visible.length} registros</span>
       </div>
@@ -66,7 +66,7 @@ export default function Vendas() {
         </div>
         {err && <p className="mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">{err}</p>}
         <button onClick={add} className="mt-4 inline-flex rounded-xl bg-borromeu-700 text-white px-5 py-2.5 text-sm font-bold hover:bg-borromeu-800 shadow-sm transition">
-          Registrar venda · R$10,00
+          Registrar venda
         </button>
       </div>
 

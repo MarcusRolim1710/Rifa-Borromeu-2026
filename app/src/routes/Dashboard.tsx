@@ -53,9 +53,9 @@ export default function Dashboard() {
       <div className="rounded-[24px] bg-borromeu-800 text-white p-6 md:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm overflow-hidden relative">
         <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
         <div className="relative">
-          <p className="text-xs tracking-[0.18em] font-bold text-white/60 uppercase">Visão geral · R$10/ponto</p>
+          <p className="text-xs tracking-[0.18em] font-bold text-white/60 uppercase">Visão geral</p>
           <h1 className="font-display font-black text-[28px] md:text-[34px] leading-none mt-1">Dashboard</h1>
-          <p className="text-sm text-white/70 mt-1">{isAdmin ? 'Todos os vendedores · 20 números por cartela' : 'Seus números e vendas'}</p>
+          <p className="text-sm text-white/70 mt-1">{isAdmin ? 'Todos os vendedores' : 'Seus números e vendas'}</p>
         </div>
         <button onClick={handlePdf} className="relative inline-flex items-center gap-2 rounded-full bg-white text-borromeu-800 px-5 py-2.5 text-sm font-bold hover:bg-stone-50 transition shadow-sm">
           ⤓ Exportar PDF
@@ -65,10 +65,10 @@ export default function Dashboard() {
 
       {/* KPIs — distinctive: big serif numbers, varied treatment */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <Kpi label="Total vendido" value={String(total)} sub="pontos" note="em cartelas alocadas" />
+        <Kpi label="Total vendido" value={String(total)} sub="pontos" />
         <Kpi label="Valor recebido" value={`R$ ${valorRecebido.toFixed(2)}`} sub={`${pagos} pagos`} accent />
         <Kpi label="A receber" value={`R$ ${valorAReceber.toFixed(2)}`} sub={`${pendentes} pendentes`} muted />
-        <Kpi label="Cartelas" value="3" sub="alocadas" note="10-29 · 200-219" />
+        <Kpi label="Cartelas" value="3" sub="alocadas" />
       </div>
 
       <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-4">
@@ -112,7 +112,7 @@ export default function Dashboard() {
           )}
           <div className="mt-6 rounded-xl bg-stone-900 text-white p-4">
             <p className="text-xs tracking-widest font-bold text-white/60 uppercase">Regra Borromeu</p>
-            <p className="text-sm leading-snug mt-1">Cartela sempre 20 números sequenciais. Sem overlap. Devolução só se 0 vendas.</p>
+            <p className="text-sm leading-snug mt-1">Cartelas em ranges sequenciais. Sem sobreposição. Devolução só se sem vendas.</p>
           </div>
         </div>
       </div>

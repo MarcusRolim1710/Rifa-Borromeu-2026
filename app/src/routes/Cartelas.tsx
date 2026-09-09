@@ -41,12 +41,12 @@ export default function Cartelas() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display font-black text-2xl text-stone-900">Cartelas</h1>
-        <p className="text-sm text-stone-600">20 números por cartela · ranges sequenciais · sem overlap</p>
+        <p className="text-sm text-stone-600">Ranges sequenciais · sem sobreposição</p>
       </div>
 
       <div className="bg-white rounded-[20px] border border-stone-200 p-5 md:p-6 shadow-sm">
         <h2 className="font-display font-bold text-stone-900">Nova cartela</h2>
-        <p className="text-xs text-stone-500 mt-1">Ex 10 → 10-29, 200 → 200-219</p>
+        <p className="text-xs text-stone-500 mt-1">Ex 10 → 10-29 · distribuição por ranges</p>
         <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 mt-4">
           <label className="block">
             <span className="text-xs font-bold tracking-widest uppercase text-stone-500">Início</span>
@@ -77,7 +77,7 @@ export default function Cartelas() {
                 <span className="font-mono text-sm font-bold px-2.5 py-1 rounded-full bg-stone-900 text-white">{c.start}—{c.end}</span>
                 <span className="text-sm font-semibold text-stone-700">{c.seller}</span>
                 <span className={`text-xs font-bold px-2 py-1 rounded-full border ${c.vendas === 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>{c.vendas} vendas</span>
-                <span className="text-xs text-stone-500">{20 - c.vendas} disponíveis</span>
+                <span className="text-xs text-stone-500">{c.vendas} vendidos</span>
               </div>
               {/* ticket grid */}
               <div className="mt-3 grid grid-cols-10 gap-1.5 max-w-[360px]">

@@ -23,14 +23,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="leading-tight">
               <p className="font-display font-black text-[17px] tracking-tight text-stone-900">Rifa Borromeu</p>
-              <p className="text-[11px] tracking-[0.14em] font-semibold text-borromeu-700 uppercase -mt-0.5">2026 · 20 por cartela</p>
+              <p className="text-[11px] tracking-[0.14em] font-semibold text-borromeu-700 uppercase -mt-0.5">2026</p>
             </div>
           </Link>
 
           <div className="flex items-center gap-3">
             <div className="hidden sm:block text-right leading-tight">
               <p className="text-sm font-semibold text-stone-800">{profile.name}</p>
-              <p className="text-xs capitalize text-stone-500">{profile.role} · R$10/ponto</p>
+              <p className="text-xs capitalize text-stone-500">{profile.role}</p>
             </div>
             <div className="w-8 h-8 rounded-full bg-stone-900 text-white grid place-items-center text-xs font-bold">
               {profile.name.slice(0, 2).toUpperCase()}
@@ -56,9 +56,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {isAdmin && <NavLink to="/cartelas" active={loc.pathname.startsWith('/cartelas')} icon="▦">Cartelas</NavLink>}
             <NavLink to="/vendas" active={loc.pathname.startsWith('/vendas')} icon="✎">Minhas vendas</NavLink>
             <div className="my-2 border-t border-stone-100" />
-            <div className="px-2 py-2 rounded-xl bg-borromeu-50 border border-borromeu-100">
-              <p className="text-xs font-semibold text-borromeu-800">Cartela = 20 números</p>
-              <p className="text-xs text-stone-600 mt-1 leading-snug">Ranges sequenciais ex 10-29. Sem overlap.</p>
+            <div className="px-2 py-2 rounded-xl bg-stone-50 border border-stone-200">
+              <p className="text-xs font-semibold text-stone-700">Gestão de rifa</p>
+              <p className="text-xs text-stone-500 mt-1 leading-snug">Ranges sequenciais. Sem sobreposição.</p>
             </div>
           </div>
         </nav>

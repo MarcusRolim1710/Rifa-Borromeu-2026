@@ -29,7 +29,7 @@ export default function Login() {
           <div className="w-12 h-12 rounded-2xl bg-white text-borromeu-800 grid place-items-center font-display font-black">RB</div>
           <h1 className="font-display font-black text-4xl leading-none mt-6">Rifa<br />Borromeu<br /><span className="text-[#f0d9a0]">2026</span></h1>
           <p className="mt-4 text-white/80 text-sm leading-relaxed max-w-sm">
-            Gestão de cartelas de 20 números. Admin distribui ranges, vendedor registra ponto a ponto. R$10 por ponto · PDF com data/hora.
+            Gestão completa de rifa. Admin distribui cartelas, vendedor registra vendas. Relatórios com data/hora.
           </p>
         </div>
         <div className="relative flex gap-3">
@@ -38,8 +38,8 @@ export default function Login() {
             <p className="text-xs text-white/70 uppercase tracking-widest font-semibold">Vendedores</p>
           </div>
           <div className="flex-1 rounded-2xl bg-white text-borromeu-800 p-4">
-            <p className="font-display font-black text-lg">R$10</p>
-            <p className="text-xs text-stone-500 uppercase tracking-widest font-semibold">Por ponto</p>
+            <p className="font-display font-black text-lg">PWA</p>
+            <p className="text-xs text-stone-500 uppercase tracking-widest font-semibold">Sempre online</p>
           </div>
         </div>
       </div>
