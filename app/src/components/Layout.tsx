@@ -55,11 +55,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <NavLink to="/" active={loc.pathname === '/'} icon="◈">Dashboard</NavLink>
             {isAdmin && <NavLink to="/cartelas" active={loc.pathname.startsWith('/cartelas')} icon="▦">Cartelas</NavLink>}
             <NavLink to="/vendas" active={loc.pathname.startsWith('/vendas')} icon="✎">Minhas vendas</NavLink>
-            <div className="my-2 border-t border-stone-100" />
-            <div className="px-2 py-2 rounded-xl bg-stone-50 border border-stone-200">
-              <p className="text-xs font-semibold text-stone-700">Gestão de rifa</p>
-              <p className="text-xs text-stone-500 mt-1 leading-snug">Ranges sequenciais. Sem sobreposição.</p>
-            </div>
           </div>
         </nav>
         <main className="flex-1 min-w-0 pb-16 md:pb-0">{children}</main>

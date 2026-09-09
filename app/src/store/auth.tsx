@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 
 type Role = 'admin' | 'seller'
 type Profile = { id: string; role: Role; name: string } | null
@@ -18,9 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) {
-      const mock = localStorage.getItem('mock_profile')
-      if (mock) setProfile(JSON.parse(mock))
+    if (!supabase) {
       setLoading(false)
       return
     }
@@ -36,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setProfile(data as Profile)
       }
+      setLoading(false)
     }
 
     supabase.auth.getSession().then(({ data }) => {
@@ -45,20 +44,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       else setLoading(false)
     })
 
-    // quando profile carregar, loading false
     const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, session) => {
       if (!mounted) return
       const user = session?.user
       if (user) {
         await loadProfile(user.id)
-        setLoading(false)
       } else {
         setProfile(null)
         setLoading(false)
       }
     })
 
-    // fallback para evitar loading infinito se profile não existir
     const timer = setTimeout(() => {
       if (mounted) setLoading(false)
     }, 3000)
@@ -71,32 +67,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   async function signIn(email: string, password: string) {
-    if (!isSupabaseConfigured || !supabase) {
-      if (email === 'admin@borromeu' && password === '123') {
-        const p = { id: 'mock-admin', role: 'admin' as const, name: 'Admin' }
-        localStorage.setItem('mock_profile', JSON.stringify(p))
-        setProfile(p)
-        return { error: null }
-      }
-      if (email === 'seller@borromeu' && password === '123') {
-        const p = { id: 'mock-seller', role: 'seller' as const, name: 'Vendedor' }
-        localStorage.setItem('mock_profile', JSON.stringify(p))
-        setProfile(p)
-        return { error: null }
-      }
-      return { error: 'Supabase não configurado. Use admin@borromeu / seller@borromeu senha 123' }
+    if (!supabase) {
+      return { error: 'Serviço indisponível no momento. Tente novamente mais tarde.' }
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { error: error.message }
 
-    // profile será carregado pelo onAuthStateChange / getSession
     return { error: null }
   }
 
   async function signOut() {
-    if (!isSupabaseConfigured || !supabase) {
-      localStorage.removeItem('mock_profile')
+    if (!supabase) {
       setProfile(null)
       return
     }

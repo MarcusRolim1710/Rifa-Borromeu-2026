@@ -21,81 +21,56 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen grid md:grid-cols-[1.1fr_0.9fr] bg-[#fdf8f4]">
-      {/* brand */}
-      <div className="hidden md:flex flex-col justify-between p-10 bg-borromeu-800 text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `radial-gradient(circle at 30% 20%, #fff 1px, transparent 1px)`, backgroundSize: '24px 24px' }} />
-        <div className="relative">
-          <div className="w-12 h-12 rounded-2xl bg-white text-borromeu-800 grid place-items-center font-display font-black">RB</div>
-          <h1 className="font-display font-black text-4xl leading-none mt-6">Rifa<br />Borromeu<br /><span className="text-[#f0d9a0]">2026</span></h1>
-          <p className="mt-4 text-white/80 text-sm leading-relaxed max-w-sm">
-            Gestão completa de rifa. Admin distribui cartelas, vendedor registra vendas. Relatórios com data/hora.
-          </p>
-        </div>
-        <div className="relative flex gap-3">
-          <div className="flex-1 rounded-2xl bg-white/10 backdrop-blur p-4 border border-white/10">
-            <p className="font-display font-bold text-lg">50</p>
-            <p className="text-xs text-white/70 uppercase tracking-widest font-semibold">Vendedores</p>
-          </div>
-          <div className="flex-1 rounded-2xl bg-white text-borromeu-800 p-4">
-            <p className="font-display font-black text-lg">PWA</p>
-            <p className="text-xs text-stone-500 uppercase tracking-widest font-semibold">Sempre online</p>
-          </div>
-        </div>
+    <div className="min-h-screen relative flex items-center justify-center p-4 md:p-6">
+      {/* fundo */}
+      <div className="absolute inset-0">
+        <img
+          src="/backgroud-capela.png"
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-stone-900/35" />
+        <div className="absolute inset-0 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
       </div>
 
-      {/* form */}
-      <div className="flex items-center justify-center p-6 md:p-10">
-        <div className="w-full max-w-md">
-          <div className="md:hidden flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-borromeu-700 grid place-items-center text-white font-display font-black">RB</div>
-            <p className="font-display font-black text-xl">Rifa Borromeu 2026</p>
-          </div>
+      {/* painel login */}
+      <div className="relative w-full max-w-md">
+        <div className="bg-white rounded-[24px] border border-white/20 p-7 md:p-8 shadow-2xl">
+          <h1 className="font-display font-black text-2xl text-stone-900">Entrar</h1>
+          <p className="text-sm text-stone-500 mt-1">Acesse sua conta</p>
 
-          <div className="bg-white rounded-[24px] border border-stone-200 p-7 md:p-8 shadow-sm">
-            <h2 className="font-display font-black text-2xl text-stone-900">Entrar</h2>
-            <p className="text-sm text-stone-500 mt-1">Admin ou vendedor · acesso por email</p>
-
-            <div className="mt-4 rounded-xl bg-stone-50 border border-stone-200 px-3 py-2.5 flex gap-2">
-              <span className="text-stone-500">⚑</span>
-              <p className="text-xs leading-snug text-stone-600">
-                Dev (sem Supabase): admin@borromeu / 123 · seller@borromeu / 123
-              </p>
-            </div>
-
-            <form onSubmit={onSubmit} className="mt-6 space-y-4">
-              <label className="block">
-                <span className="text-sm font-semibold text-stone-700">Email</span>
-                <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@borromeu"
-                  autoComplete="username"
-                  className="mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-borromeu-700/20 focus:border-borromeu-700"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold text-stone-700">Senha</span>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  className="mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-borromeu-700/20 focus:border-borromeu-700"
-                />
-              </label>
-              {err && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">{err}</p>}
-              <button
-                disabled={loading}
-                className="w-full rounded-xl bg-borromeu-700 text-white py-3 text-sm font-bold hover:bg-borromeu-800 disabled:opacity-50 shadow-sm transition"
-              >
-                {loading ? 'Entrando...' : 'Entrar →'}
-              </button>
-              <p className="text-center text-xs text-stone-500">Esqueceu? Fale com o admin.</p>
-            </form>
-          </div>
-
-          <p className="text-center text-xs text-stone-400 mt-6">© 2026 Borromeu · PWA sempre online</p>
+          <form onSubmit={onSubmit} className="mt-6 space-y-4">
+            <label className="block">
+              <span className="text-sm font-semibold text-stone-700">Email</span>
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                autoComplete="username"
+                className="mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-borromeu-700/20 focus:border-borromeu-700"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-stone-700">Senha</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                className="mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-borromeu-700/20 focus:border-borromeu-700"
+              />
+            </label>
+            {err && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">{err}</p>}
+            <button
+              disabled={loading}
+              className="w-full rounded-xl bg-borromeu-700 text-white py-3 text-sm font-bold hover:bg-borromeu-800 disabled:opacity-50 shadow-sm transition"
+            >
+              {loading ? 'Entrando...' : 'Entrar →'}
+            </button>
+            <p className="text-center text-xs text-stone-500">Esqueceu? Fale com o admin.</p>
+          </form>
         </div>
       </div>
     </div>

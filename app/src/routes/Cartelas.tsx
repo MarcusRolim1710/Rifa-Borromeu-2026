@@ -1,13 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../store/auth'
-import { isSupabaseConfigured } from '../lib/supabase'
 import { useCartelas, useCreateCartela, useDeleteCartela, useEdition, useProfiles, useSales } from '../lib/queries'
-
-type CartelaMock = { id: string; start: number; end: number; seller: string; sellerId: string; vendas: number }
-const MOCK: CartelaMock[] = [
-  { id: '1', start: 10, end: 29, seller: 'João', sellerId: 'mock-seller', vendas: 2 },
-  { id: '2', start: 200, end: 219, seller: 'Ana V', sellerId: 'other', vendas: 1 },
-]
 
 export default function Cartelas() {
   const { profile } = useAuth()
@@ -25,19 +18,16 @@ export default function Cartelas() {
 
   if (!isAdmin) return <div className="rounded-2xl bg-white border border-stone-200 p-8 text-center"><p className="font-display font-bold text-stone-800">Apenas admin</p><p className="text-sm text-stone-500 mt-1">Você não tem permissão para gerenciar cartelas.</p></div>
 
-  const useReal = isSupabaseConfigured && cartelasReal
-  const cartelas = useReal
-    ? cartelasReal.map((c) => ({
-        id: c.id,
-        start: c.start_int,
-        end: c.end_int,
-        seller: c.seller_name ?? c.seller_id.slice(0, 8),
-        sellerId: c.seller_id,
-        vendas: (salesReal ?? []).filter((s) => s.cartela_id === c.id).length,
-      }))
-    : MOCK
+  const cartelas = (cartelasReal ?? []).map((c) => ({
+    id: c.id,
+    start: c.start_int,
+    end: c.end_int,
+    seller: c.seller_name ?? c.seller_id.slice(0, 8),
+    sellerId: c.seller_id,
+    vendas: (salesReal ?? []).filter((s) => s.cartela_id === c.id).length,
+  }))
 
-  const sellers = profiles?.filter((p) => p.role === 'seller') ?? [{ id: 'mock-seller', name: 'João', role: 'seller' } as never, { id: 'other', name: 'Ana V', role: 'seller' } as never]
+  const sellers = profiles?.filter((p) => p.role === 'seller') ?? []
 
   async function add() {
     setErr(null)
@@ -47,20 +37,13 @@ export default function Cartelas() {
     if (!targetSeller) return setErr('Selecione vendedor')
     if (!edition) return setErr('Edição não encontrada')
 
-    if (useReal) {
-      try {
-        await create.mutateAsync({ edition_id: edition.id, seller_id: targetSeller, start_int: s })
-        setStart('')
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e)
-        if (msg.includes('no_overlap') || msg.includes('exclude')) setErr(`Range ${s}-${s + 19} conflita com cartela existente`)
-        else setErr(msg)
-      }
-    } else {
-      const e = s + 19
-      if (cartelas.some((c) => !(e < c.start || s > c.end))) return setErr(`Range ${s}-${e} conflita`)
-      // mock add locally not persisted
-      setErr('Modo mock — configure Supabase para persistir')
+    try {
+      await create.mutateAsync({ edition_id: edition.id, seller_id: targetSeller, start_int: s })
+      setStart('')
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e)
+      if (msg.includes('no_overlap') || msg.includes('exclude')) setErr(`Range ${s}-${s + 19} conflita com cartela existente`)
+      else setErr(msg)
     }
   }
 
@@ -69,14 +52,10 @@ export default function Cartelas() {
     if (!c) return
     if (c.vendas > 0) return alert('Cartela contém vendas e não pode ser devolvida.')
     if (!confirm(`Devolver cartela ${c.start}-${c.end} de ${c.seller}?`)) return
-    if (useReal) {
-      try {
-        await del.mutateAsync(id)
-      } catch (e: unknown) {
-        alert(e instanceof Error ? e.message : String(e))
-      }
-    } else {
-      alert('Modo mock')
+    try {
+      await del.mutateAsync(id)
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : String(e))
     }
   }
 
@@ -84,12 +63,12 @@ export default function Cartelas() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display font-black text-2xl text-stone-900">Cartelas</h1>
-        <p className="text-sm text-stone-600">Ranges sequenciais · sem sobreposição {edition ? `· ${edition.name}` : ''}</p>
+        <p className="text-sm text-stone-600">{edition ? `${edition.name}` : ''}</p>
       </div>
 
       <div className="bg-white rounded-[20px] border border-stone-200 p-5 md:p-6 shadow-sm">
         <h2 className="font-display font-bold text-stone-900">Nova cartela</h2>
-        <p className="text-xs text-stone-500 mt-1">Ex 10 → 10-29 · distribuição por ranges</p>
+        <p className="text-xs text-stone-500 mt-1">Informe o início do range</p>
         <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 mt-4">
           <label className="block">
             <span className="text-xs font-bold tracking-widest uppercase text-stone-500">Início</span>
@@ -112,7 +91,6 @@ export default function Cartelas() {
           </div>
         </div>
         {err && <p className="mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">{err}</p>}
-        {!isSupabaseConfigured && <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-3">Modo mock — dados não persistem.</p>}
       </div>
 
       {isLoading ? (

@@ -1,16 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../store/auth'
 import { exportVendasPdf } from '../lib/pdf'
-import { isSupabaseConfigured } from '../lib/supabase'
 import { useEdition, useSales } from '../lib/queries'
-
-type SaleMock = { id: string; number: number; buyer: string; cell: string; seller: string; status: 'pago' | 'pendente'; sellerId: string }
-const MOCK_SALES: SaleMock[] = [
-  { id: '1', number: 12, buyer: 'Maria Silva', cell: '(85) 99999-0001', seller: 'João', sellerId: 'mock-seller', status: 'pago' },
-  { id: '2', number: 15, buyer: 'Pedro Santos', cell: '(85) 99999-0002', seller: 'João', sellerId: 'mock-seller', status: 'pendente' },
-  { id: '3', number: 201, buyer: 'Ana Lima', cell: '(85) 99999-0003', seller: 'Ana V', sellerId: 'other', status: 'pago' },
-  { id: '4', number: 22, buyer: 'Carlos Borromeu', cell: '(85) 98888-0000', seller: 'João', sellerId: 'mock-seller', status: 'pago' },
-]
 
 export default function Dashboard() {
   const { profile } = useAuth()
@@ -21,15 +12,8 @@ export default function Dashboard() {
   const price = edition?.price_per_point ?? 10
   const { data: salesReal, isLoading } = useSales()
 
-  // map real sales to display shape when supabase configured
   const sales = useMemo(() => {
-    if (!isSupabaseConfigured || !salesReal) {
-      // fallback mock com filtro seller
-      let filtered = MOCK_SALES
-      if (!isAdmin) filtered = MOCK_SALES.filter((s) => s.sellerId === profile?.id || s.sellerId === 'mock-seller')
-      else if (filterSeller !== 'all') filtered = MOCK_SALES.filter((s) => s.seller === filterSeller)
-      return filtered.map((s) => ({ id: s.id, number: s.number, buyer: s.buyer, cell: s.cell, seller: s.seller, status: s.status, sellerId: s.sellerId }))
-    }
+    if (!salesReal) return []
     const mapped = salesReal.map((r) => ({
       id: r.id,
       number: r.number_int,
@@ -89,7 +73,7 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {isSupabaseConfigured && isLoading ? (
+      {isLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-28 rounded-[20px] bg-white border border-stone-200 animate-pulse" />
@@ -100,7 +84,7 @@ export default function Dashboard() {
           <Kpi label="Total vendido" value={String(total)} sub="pontos" />
           <Kpi label="Valor recebido" value={`R$ ${valorRecebido.toFixed(2)}`} sub={`${pagos} pagos`} accent />
           <Kpi label="A receber" value={`R$ ${valorAReceber.toFixed(2)}`} sub={`${pendentes} pendentes`} muted />
-          <Kpi label="Cartelas" value={String(allSellers.length ? '—' : '0')} sub={isSupabaseConfigured ? 'alocadas' : 'alocadas'} />
+          <Kpi label="Cartelas" value={String(allSellers.length ? allSellers.length : '0')} sub="alocadas" />
         </div>
       )}
 
@@ -127,7 +111,7 @@ export default function Dashboard() {
 
         <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm">
           <h2 className="font-display font-bold text-stone-900">Filtros</h2>
-          <p className="text-xs text-stone-500 mt-1">Admin vê tudo; vendedor só próprio.</p>
+          <p className="text-xs text-stone-500 mt-1">Filtre por vendedor</p>
           {isAdmin ? (
             <label className="block mt-4">
               <span className="text-sm font-semibold text-stone-700">Vendedor</span>
@@ -139,16 +123,11 @@ export default function Dashboard() {
               </select>
             </label>
           ) : (
-            <div className="mt-4 rounded-xl bg-borromeu-50 border border-borromeu-100 p-3">
-              <p className="text-sm font-semibold text-borromeu-800">Seus dados isolados</p>
-              <p className="text-xs text-stone-600 mt-1">Você só vê suas cartelas e vendas (RLS).</p>
+            <div className="mt-4 rounded-xl bg-stone-50 border border-stone-200 p-3">
+              <p className="text-sm font-semibold text-stone-800">Seus dados</p>
+              <p className="text-xs text-stone-600 mt-1">Você vê apenas seus registros.</p>
             </div>
           )}
-          <div className="mt-6 rounded-xl bg-stone-900 text-white p-4">
-            <p className="text-xs tracking-widest font-bold text-white/60 uppercase">Regra Borromeu</p>
-            <p className="text-sm leading-snug mt-1">Cartelas em ranges sequenciais. Sem sobreposição. Devolução só se sem vendas.</p>
-          </div>
-          {!isSupabaseConfigured && <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-4">Modo mock — configure Supabase para dados reais.</p>}
         </div>
       </div>
     </div>

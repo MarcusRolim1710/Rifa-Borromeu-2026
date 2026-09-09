@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { isSupabaseConfigured, supabase } from './supabase'
+import { supabase } from './supabase'
 
 export type CartelaRow = {
   id: string
@@ -25,13 +25,12 @@ export type SaleRow = {
   seller_name?: string
 }
 
-// Edição ativa (primeira)
 export function useEdition() {
   return useQuery({
     queryKey: ['edition'],
-    enabled: isSupabaseConfigured,
     queryFn: async () => {
-      const { data, error } = await supabase!.from('rifa_editions').select('id, name, price_per_point').order('created_at').limit(1).single()
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { data, error } = await supabase.from('rifa_editions').select('id, name, price_per_point').order('created_at').limit(1).single()
       if (error) throw error
       return data as { id: string; name: string; price_per_point: number }
     },
@@ -41,9 +40,9 @@ export function useEdition() {
 export function useCartelas() {
   return useQuery({
     queryKey: ['cartelas'],
-    enabled: isSupabaseConfigured,
     queryFn: async () => {
-      const { data, error } = await supabase!
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { data, error } = await supabase
         .from('cartelas')
         .select('id, edition_id, seller_id, start_int, end_int, status, created_at, profiles!cartelas_seller_id_fkey(name)')
         .order('start_int')
@@ -59,9 +58,9 @@ export function useCartelas() {
 export function useSales() {
   return useQuery({
     queryKey: ['sales'],
-    enabled: isSupabaseConfigured,
     queryFn: async () => {
-      const { data, error } = await supabase!
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { data, error } = await supabase
         .from('sales')
         .select('id, edition_id, cartela_id, seller_id, number_int, buyer_name, buyer_cell, payment_status, sold_at, profiles!sales_seller_id_fkey(name)')
         .order('sold_at', { ascending: false })
@@ -77,9 +76,9 @@ export function useSales() {
 export function useProfiles() {
   return useQuery({
     queryKey: ['profiles'],
-    enabled: isSupabaseConfigured,
     queryFn: async () => {
-      const { data, error } = await supabase!.from('profiles').select('id, name, role').order('name')
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { data, error } = await supabase.from('profiles').select('id, name, role').order('name')
       if (error) throw error
       return data as Array<{ id: string; name: string; role: string }>
     },
@@ -90,8 +89,9 @@ export function useCreateCartela() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: { edition_id: string; seller_id: string; start_int: number }) => {
+      if (!supabase) throw new Error('Serviço indisponível')
       const end_int = payload.start_int + 19
-      const { data, error } = await supabase!
+      const { data, error } = await supabase
         .from('cartelas')
         .insert({ edition_id: payload.edition_id, seller_id: payload.seller_id, start_int: payload.start_int, end_int })
         .select()
@@ -107,7 +107,8 @@ export function useDeleteCartela() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase!.from('cartelas').delete().eq('id', id)
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { error } = await supabase.from('cartelas').delete().eq('id', id)
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cartelas'] }),
@@ -126,7 +127,8 @@ export function useCreateSale() {
       buyer_cell: string
       payment_status: 'pago' | 'pendente'
     }) => {
-      const { data, error } = await supabase!.from('sales').insert(payload).select().single()
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { data, error } = await supabase.from('sales').insert(payload).select().single()
       if (error) throw error
       return data
     },
