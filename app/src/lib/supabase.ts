@@ -1,13 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
+const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
 
-if (!url || !anonKey) {
-  console.warn('[supabase] VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY nao configurados - modo mock')
+if (!url || !publishableKey) {
+  console.warn('[supabase] VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY não configurados')
 }
 
-export const supabase =
-  url && anonKey ? createClient(url, anonKey) : (null as unknown as ReturnType<typeof createClient>)
+export const supabase = url && publishableKey ? createClient(url, publishableKey) : null
 
 export const isSupabaseConfigured = !!supabase

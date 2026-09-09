@@ -56,10 +56,10 @@ export default function Login() {
             <h2 className="font-display font-black text-2xl text-stone-900">Entrar</h2>
             <p className="text-sm text-stone-500 mt-1">Admin ou vendedor · acesso por email</p>
 
-            <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 flex gap-2">
-              <span className="text-amber-700">⚑</span>
-              <p className="text-xs leading-snug text-amber-900">
-                <b>Mock sem Supabase:</b> admin@borromeu / 123 · seller@borromeu / 123
+            <div className="mt-4 rounded-xl bg-stone-50 border border-stone-200 px-3 py-2.5 flex gap-2">
+              <span className="text-stone-500">⚑</span>
+              <p className="text-xs leading-snug text-stone-600">
+                Dev (sem Supabase): admin@borromeu / 123 · seller@borromeu / 123
               </p>
             </div>
 

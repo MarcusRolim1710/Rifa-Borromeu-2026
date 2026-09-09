@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { isSupabaseConfigured, supabase } from '../lib/supabase'
 
 type Role = 'admin' | 'seller'
 type Profile = { id: string; role: Role; name: string } | null
@@ -18,32 +18,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!supabase) {
-      // mock para dev sem supabase
+    if (!isSupabaseConfigured || !supabase) {
       const mock = localStorage.getItem('mock_profile')
       if (mock) setProfile(JSON.parse(mock))
       setLoading(false)
       return
     }
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (data.session?.user) {
-        const { data: p } = await supabase.from('profiles').select('*').eq('id', data.session.user.id).single()
-        setProfile(p as Profile)
+
+    let mounted = true
+
+    async function loadProfile(userId: string) {
+      const { data, error } = await supabase!.from('profiles').select('id, role, name').eq('id', userId).single()
+      if (!mounted) return
+      if (error) {
+        console.error('[auth] erro ao carregar profile', error)
+        setProfile(null)
+      } else {
+        setProfile(data as Profile)
       }
-      setLoading(false)
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return
+      const user = data.session?.user
+      if (user) loadProfile(user.id)
+      else setLoading(false)
     })
+
+    // quando profile carregar, loading false
     const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, session) => {
-      if (session?.user) {
-        const { data: p } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
-        setProfile(p as Profile)
-      } else setProfile(null)
+      if (!mounted) return
+      const user = session?.user
+      if (user) {
+        await loadProfile(user.id)
+        setLoading(false)
+      } else {
+        setProfile(null)
+        setLoading(false)
+      }
     })
-    return () => sub.subscription.unsubscribe()
+
+    // fallback para evitar loading infinito se profile não existir
+    const timer = setTimeout(() => {
+      if (mounted) setLoading(false)
+    }, 3000)
+
+    return () => {
+      mounted = false
+      clearTimeout(timer)
+      sub.subscription.unsubscribe()
+    }
   }, [])
 
   async function signIn(email: string, password: string) {
-    if (!supabase) {
-      // mock: admin@borromeu / seller@borromeu senha 123
+    if (!isSupabaseConfigured || !supabase) {
       if (email === 'admin@borromeu' && password === '123') {
         const p = { id: 'mock-admin', role: 'admin' as const, name: 'Admin' }
         localStorage.setItem('mock_profile', JSON.stringify(p))
@@ -56,14 +84,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(p)
         return { error: null }
       }
-      return { error: 'Credenciais mock: admin@borromeu / seller@borromeu senha 123 (sem Supabase)' }
+      return { error: 'Supabase não configurado. Use admin@borromeu / seller@borromeu senha 123' }
     }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error?.message ?? null }
+    if (error) return { error: error.message }
+
+    // profile será carregado pelo onAuthStateChange / getSession
+    return { error: null }
   }
 
   async function signOut() {
-    if (!supabase) {
+    if (!isSupabaseConfigured || !supabase) {
       localStorage.removeItem('mock_profile')
       setProfile(null)
       return
