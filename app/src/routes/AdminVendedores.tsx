@@ -27,37 +27,41 @@ export default function AdminVendedores() {
     if (!login.includes('.')) return setErr('Informe nome e sobrenome')
     setCreating(true)
     try {
-      // tenta Edge Function primeiro
+      // tenta Edge Function primeiro (quando deployada)
       const { data: { session } } = await supabase!.auth.getSession()
       const token = session?.access_token
       let ok = false
+      let lastErr: string | null = null
       if (token) {
         const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-vendedor`
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ email: login, password: 'Borromeu2026!', name: `${nome.trim()} ${sobrenome.trim()}`, phone: phone.trim() || null }),
-        })
-        if (res.ok) ok = true
-        else {
-          const txt = await res.text()
-          // fallback para SQL direto se function não deployada
-          if (res.status === 404) ok = false
-          else throw new Error(txt || 'Falha ao criar vendedor')
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ email: login, password: 'Borromeu2026!', name: `${nome.trim()} ${sobrenome.trim()}`, phone: phone.trim() || null }),
+          })
+          if (res.ok) ok = true
+          else {
+            const txt = await res.text()
+            lastErr = txt
+            if (res.status === 404) ok = false
+            else throw new Error(txt || 'Falha ao criar vendedor')
+          }
+        } catch (fetchErr) {
+          // Failed to fetch / CORS / function não deployada -> fallback para RPC
+          lastErr = fetchErr instanceof Error ? fetchErr.message : String(fetchErr)
+          ok = false
         }
       }
       if (!ok) {
-        // fallback: cria via signUp (requer confirmação desabilitada ou email fake)
-        // usa supabase.auth.signUp e insere profile; admin precisará confirmar depois
-        const { data, error } = await supabase!.auth.signUp({ email: login, password: 'Borromeu2026!', options: { data: { name: `${nome.trim()} ${sobrenome.trim()}` } } })
-        if (error) throw error
-        const uid = data.user?.id
-        if (!uid) throw new Error('Não foi possível criar usuário (verifique se email já existe)')
-        // insere profile
-        const { error: pErr } = await supabase!.from('profiles').insert({ id: uid, role: 'seller', name: `${nome.trim()} ${sobrenome.trim()}`, phone: phone.trim() || null, must_change_password: true })
-        if (pErr) throw pErr
-      } else {
-        // Edge Function já criou com must_change true
+        // fallback RPC direto (SECURITY DEFINER) - funciona sem Edge Function
+        const { data, error } = await supabase!.rpc('create_vendedor', {
+          p_email: login,
+          p_name: `${nome.trim()} ${sobrenome.trim()}`,
+          p_phone: phone.trim() || null,
+        })
+        if (error) throw new Error(lastErr ? `${lastErr} | RPC: ${error.message}` : error.message)
+        if (!data) throw new Error('RPC não retornou id')
       }
       setMsg(`Vendedor ${nome} ${sobrenome} criado · login ${login} · senha Borromeu2026!`)
       setNome(''); setSobrenome(''); setPhone('')
@@ -69,19 +73,20 @@ export default function AdminVendedores() {
 
   async function handleReset(id: string, emailHint: string) {
     if (!confirm(`Resetar senha de ${emailHint} para Borromeu2026! ?`)) return
+    setErr(null); setMsg(null)
     try {
       const { data: { session } } = await supabase!.auth.getSession()
       const token = session?.access_token
       if (token) {
         const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-vendedor`
-        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action: 'reset', user_id: id }) })
-        if (res.ok) { setMsg('Senha resetada para Borromeu2026!'); return }
+        try {
+          const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action: 'reset', user_id: id }) })
+          if (res.ok) { setMsg('Senha resetada para Borromeu2026!'); return }
+        } catch { /* fallback para RPC */ }
       }
-      // fallback: atualiza profile para forçar troca e tenta admin update via supabase.auth.admin não disponível no client
-      // apenas marca must_change e informa que admin deve resetar via Dashboard Supabase
-      const { error } = await supabase!.from('profiles').update({ must_change_password: true }).eq('id', id)
+      const { error } = await supabase!.rpc('reset_vendedor_password', { p_user_id: id })
       if (error) throw error
-      setMsg('Marcado para troca no próximo login. Para resetar senha, use Supabase Dashboard → Auth → usuário → Reset password para Borromeu2026!')
+      setMsg('Senha resetada para Borromeu2026! · vendedor precisará trocar no próximo login')
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)) }
   }
 
