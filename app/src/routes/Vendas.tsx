@@ -35,15 +35,15 @@ export default function Vendas() {
     if (!Number.isFinite(n)) return setErr('Número inválido')
     if (!edition) return setErr('Edição não encontrada')
 
-    const cartela = cartelas?.find((c) => n >= c.start_int && n <= c.end_int && (isAdmin || c.seller_id === profile?.id))
-    if (!cartela) return setErr('Número não pertence a nenhuma cartela sua')
+    const cartela = cartelas?.find((c) => n >= c.start_int && n <= c.end_int && c.seller_id === profile?.id && c.status === 'alocado')
+    if (!cartela) return setErr('Número não pertence a nenhuma cartela sua em status alocado')
     if (salesReal?.some((s) => s.number_int === n && s.edition_id === edition.id)) return setErr(`Número ${n} já vendido`)
 
     try {
       await create.mutateAsync({
         edition_id: edition.id,
         cartela_id: cartela.id,
-        seller_id: isAdmin ? cartela.seller_id : (profile?.id as string),
+        seller_id: profile?.id as string,
         number_int: n,
         buyer_name: buyer.trim(),
         buyer_cell: cell.trim(),
@@ -81,7 +81,7 @@ export default function Vendas() {
               className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none"
               style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
             />
-            {cartelas && cartelas.length > 0 && <span className="text-xs" style={{ color: 'var(--muted)' }}>Suas cartelas: {cartelas.filter((c) => isAdmin || c.seller_id === profile?.id).map((c) => `${c.start_int}—${c.end_int}`).join(', ')}</span>}
+            {cartelas && cartelas.length > 0 && <span className="text-xs" style={{ color: 'var(--muted)' }}>Suas cartelas: {cartelas.filter((c) => c.seller_id === profile?.id && c.status === 'alocado').map((c) => `${c.start_int}—${c.end_int}`).join(', ') || 'nenhuma (peça ao admin)'}</span>}
           </label>
           <label className="block">
             <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Status *</span>

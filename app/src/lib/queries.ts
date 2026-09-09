@@ -9,6 +9,8 @@ export type CartelaRow = {
   end_int: number
   status: string
   created_at: string
+  solicitado_por?: string | null
+  solicitado_em?: string | null
   seller_name?: string
 }
 
@@ -44,7 +46,7 @@ export function useCartelas() {
       if (!supabase) throw new Error('Serviço indisponível')
       const { data, error } = await supabase
         .from('cartelas')
-        .select('id, edition_id, seller_id, start_int, end_int, status, created_at, profiles!cartelas_seller_id_fkey(name)')
+        .select('id, edition_id, seller_id, start_int, end_int, status, created_at, solicitado_por, solicitado_em, profiles!cartelas_seller_id_fkey(name)')
         .order('start_int')
       if (error) throw error
       return (data as unknown as Array<CartelaRow & { profiles: { name: string } | null }>).map((r) => ({
@@ -103,6 +105,26 @@ export function useCreateCartela() {
   })
 }
 
+export function useCreateCartelasLote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { edition_id: string; seller_id: string; start_int: number; end_int: number }) => {
+      if (!supabase) throw new Error('Serviço indisponível')
+      if (payload.end_int < payload.start_int) throw new Error('Fim deve ser >= início')
+      const total = payload.end_int - payload.start_int + 1
+      if (total % 20 !== 0) throw new Error('Range deve ser múltiplo de 20 (ex: 200-399 = 200 números = 10 cartelas)')
+      const rows = []
+      for (let s = payload.start_int; s <= payload.end_int; s += 20) {
+        rows.push({ edition_id: payload.edition_id, seller_id: payload.seller_id, start_int: s, end_int: s + 19 })
+      }
+      const { data, error } = await supabase.from('cartelas').insert(rows).select()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cartelas'] }),
+  })
+}
+
 export function useDeleteCartela() {
   const qc = useQueryClient()
   return useMutation({
@@ -110,6 +132,43 @@ export function useDeleteCartela() {
       if (!supabase) throw new Error('Serviço indisponível')
       const { error } = await supabase.from('cartelas').delete().eq('id', id)
       if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cartelas'] }),
+  })
+}
+
+export function useRequestDevolucao() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { data: auth } = await supabase.auth.getUser()
+      const uid = auth.user?.id
+      if (!uid) throw new Error('Não autenticado')
+      const { data, error } = await supabase
+        .from('cartelas')
+        .update({ status: 'solicitada', solicitado_por: uid, solicitado_em: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cartelas'] }),
+  })
+}
+
+export function useResolveDevolucao() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { id: string; accept: boolean }) => {
+      if (!supabase) throw new Error('Serviço indisponível')
+      const upd = payload.accept
+        ? { status: 'devolvido', solicitado_por: null, solicitado_em: null }
+        : { status: 'alocado', solicitado_por: null, solicitado_em: null }
+      const { data, error } = await supabase.from('cartelas').update(upd).eq('id', payload.id).select().single()
+      if (error) throw error
+      return data
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cartelas'] }),
   })
@@ -137,4 +196,36 @@ export function useCreateSale() {
       qc.invalidateQueries({ queryKey: ['cartelas'] })
     },
   })
+}
+
+/** Encontra próximo gap disponível (buraco devolvido) ou max+1 */
+export function findNextGap(cartelas: Pick<CartelaRow, 'start_int' | 'end_int' | 'status'>[]): { start: number; end: number; isGap: boolean } | null {
+  const active = cartelas.filter((c) => c.status !== 'devolvido').sort((a, b) => a.start_int - b.start_int)
+  if (active.length === 0) return { start: 0, end: 19, isGap: false }
+  // procura buraco entre 0 e max
+  let cursor = 0
+  for (const c of active) {
+    if (c.start_int > cursor) {
+      const gapLen = c.start_int - cursor
+      if (gapLen >= 20) return { start: cursor, end: cursor + 19, isGap: true }
+    }
+    cursor = Math.max(cursor, c.end_int + 1)
+  }
+  return { start: cursor, end: cursor + 19, isGap: false }
+}
+
+export function findAllGaps(cartelas: Pick<CartelaRow, 'start_int' | 'end_int' | 'status'>[], maxGaps = 3) {
+  const active = cartelas.filter((c) => c.status !== 'devolvido').sort((a, b) => a.start_int - b.start_int)
+  const gaps: { start: number; end: number }[] = []
+  let cursor = 0
+  for (const c of active) {
+    if (c.start_int > cursor) {
+      for (let s = cursor; s + 19 < c.start_int && gaps.length < maxGaps; s += 20) {
+        gaps.push({ start: s, end: s + 19 })
+      }
+    }
+    cursor = Math.max(cursor, c.end_int + 1)
+    if (gaps.length >= maxGaps) break
+  }
+  return gaps
 }

@@ -8,8 +8,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   if (!profile) return <>{children}</>
 
-  const isAdmin = profile.role === 'admin'
-
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--fg)' }}>
       <header
@@ -75,7 +73,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           >
             <p className="px-2 pb-2 text-[11px] tracking-widest font-bold uppercase" style={{ color: 'var(--muted)' }}>Menu</p>
             <NavLink to="/" active={loc.pathname === '/'}>Dashboard</NavLink>
-            {isAdmin && <NavLink to="/cartelas" active={loc.pathname.startsWith('/cartelas')}>Cartelas</NavLink>}
+            <NavLink to="/cartelas" active={loc.pathname.startsWith('/cartelas')}>Cartelas</NavLink>
             <NavLink to="/vendas" active={loc.pathname.startsWith('/vendas')}>Minhas vendas</NavLink>
           </div>
         </nav>
@@ -84,7 +82,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <nav className="md:hidden fixed bottom-0 inset-x-0 flex z-20" style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)' }}>
         <Mob to="/" label="Dashboard" active={loc.pathname === '/'} />
-        {isAdmin && <Mob to="/cartelas" label="Cartelas" active={loc.pathname.startsWith('/cartelas')} />}
+        <Mob to="/cartelas" label="Cartelas" active={loc.pathname.startsWith('/cartelas')} />
         <Mob to="/vendas" label="Vendas" active={loc.pathname.startsWith('/vendas')} />
       </nav>
     </div>
