@@ -102,11 +102,40 @@ export default function Cartelas() {
   // Visão vendedor: pode solicitar devolução da própria cartela
   if (!isAdmin) {
     const mine = cartelas.filter((c) => c.sellerId === profile?.id && c.status !== 'devolvido')
+    const mineIds = new Set(mine.map((c) => c.id))
+    const mineVendido = (salesReal ?? []).filter((s) => mineIds.has(s.cartela_id)).length
+    const mineTotal = mine.length * 20
+    const mineRestante = Math.max(0, mineTotal - mineVendido)
+    const minePct = mineTotal ? Math.round((mineVendido / mineTotal) * 100) : 0
+    const mineSolicitadas = mine.filter((c) => c.status === 'solicitada').length
     return (
       <div className="space-y-6">
         <div>
           <h1 className="font-display text-2xl" style={{ color: 'var(--fg)' }}>Minhas cartelas</h1>
-          <p className="text-sm" style={{ color: 'var(--muted)' }}>{edition ? edition.name : ''} · solicitação de devolução pelo vendedor</p>
+          <p className="text-sm" style={{ color: 'var(--muted)' }}>{edition ? edition.name : ''} · {mine.length} cartelas • {mineTotal} pontos</p>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: 'var(--muted)' }}>Atribuídos</p>
+            <p className="font-display text-2xl" style={{ color: 'var(--fg)' }}>{mineTotal}</p>
+            <p className="text-xs" style={{ color: 'var(--muted)' }}>{mine.length} cartelas</p>
+          </div>
+          <div className="p-4" style={{ background: 'var(--accent)', color: 'white', borderRadius: 'var(--radius)' }}>
+            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: 'color-mix(in oklch, white 70%, transparent)' }}>Vendidos</p>
+            <p className="font-display text-2xl">{mineVendido}</p>
+            <p className="text-xs" style={{ color: 'color-mix(in oklch, white 80%, transparent)' }}>{minePct}%</p>
+          </div>
+          <div className="p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: 'var(--muted)' }}>Restante</p>
+            <p className="font-display text-2xl" style={{ color: 'var(--fg)' }}>{mineRestante}</p>
+            <p className="text-xs" style={{ color: 'var(--muted)' }}>pontos livres</p>
+          </div>
+          <div className="p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+            <p className="text-xs uppercase tracking-widest font-bold" style={{ color: 'var(--muted)' }}>Solicitações</p>
+            <p className="font-display text-2xl" style={{ color: mineSolicitadas ? 'var(--accent-strong)' : 'var(--fg)' }}>{mineSolicitadas}</p>
+            <p className="text-xs" style={{ color: 'var(--muted)' }}>pendentes</p>
+          </div>
         </div>
         {isLoading ? (
           <div className="h-32 animate-pulse" style={{ borderRadius: 'var(--radius)', background: 'var(--surface)', border: '1px solid var(--border)' }} />

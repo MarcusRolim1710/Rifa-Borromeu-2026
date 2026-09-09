@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../store/auth'
 import { exportVendasPdf } from '../lib/pdf'
-import { useEdition, useSales } from '../lib/queries'
+import { useCartelas, useEdition, useSales } from '../lib/queries'
 
 export default function Dashboard() {
   const { profile } = useAuth()
@@ -10,7 +10,9 @@ export default function Dashboard() {
 
   const { data: edition } = useEdition()
   const price = edition?.price_per_point ?? 10
-  const { data: salesReal, isLoading } = useSales()
+  const { data: salesReal, isLoading: salesLoading } = useSales()
+  const { data: cartelasReal, isLoading: cartelasLoading } = useCartelas()
+  const isLoading = salesLoading || cartelasLoading
 
   const sales = useMemo(() => {
     if (!salesReal) return []
@@ -43,6 +45,13 @@ export default function Dashboard() {
   }, [sales])
 
   const allSellers = useMemo(() => [...new Set((salesReal ?? []).map((r) => r.seller_name ?? r.seller_id.slice(0, 8)))], [salesReal])
+
+  const cartelasAtivas = useMemo(() => (cartelasReal ?? []).filter((c) => c.status !== 'devolvido'), [cartelasReal])
+  const kpiCartelas = useMemo(() => {
+    if (isAdmin) return cartelasAtivas.length
+    return cartelasAtivas.filter((c) => c.seller_id === profile?.id).length
+  }, [cartelasAtivas, isAdmin, profile?.id])
+  const kpiPontosAtribuidos = kpiCartelas * 20
 
   function handlePdf() {
     exportVendasPdf(
@@ -94,7 +103,7 @@ export default function Dashboard() {
           <Kpi label="Total vendido" value={String(total)} sub="pontos" />
           <Kpi label="Valor recebido" value={`R$ ${valorRecebido.toFixed(2)}`} sub={`${pagos} pagos`} accent />
           <Kpi label="A receber" value={`R$ ${valorAReceber.toFixed(2)}`} sub={`${pendentes} pendentes`} muted />
-          <Kpi label="Cartelas" value={String(allSellers.length ? allSellers.length : '0')} sub="alocadas" />
+          <Kpi label="Cartelas" value={String(kpiCartelas)} sub={`${kpiPontosAtribuidos} pts atribuídos`} />
         </div>
       )}
 

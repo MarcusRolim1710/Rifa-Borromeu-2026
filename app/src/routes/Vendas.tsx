@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../store/auth'
 import { useCartelas, useCreateSale, useEdition, useSales } from '../lib/queries'
 
@@ -16,8 +17,11 @@ export default function Vendas() {
   const [status, setStatus] = useState<'pago' | 'pendente'>('pendente')
   const [err, setErr] = useState<string | null>(null)
 
+  const minhasCartelas = (cartelas ?? []).filter((c) => c.seller_id === profile?.id && c.status === 'alocado')
+  const temCartela = minhasCartelas.length > 0
+
   const visible = (salesReal ?? [])
-    .filter((s) => isAdmin || s.seller_id === profile?.id)
+    .filter((s) => s.seller_id === profile?.id)
     .map((s) => ({
       id: s.id,
       number: s.number_int,
@@ -63,11 +67,21 @@ export default function Vendas() {
     <div className="space-y-6">
       <div className="flex items-baseline justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl" style={{ color: 'var(--fg)' }}>{isAdmin ? 'Todas vendas' : 'Minhas vendas'}</h1>
-          <p className="text-sm" style={{ color: 'var(--muted)' }}>{edition ? `${edition.name}` : ''}</p>
+          <h1 className="font-display text-2xl" style={{ color: 'var(--fg)' }}>Minhas vendas</h1>
+          <p className="text-sm" style={{ color: 'var(--muted)' }}>{edition ? `${edition.name}` : ''}{isAdmin ? ' · admin vê só próprias' : ''}</p>
         </div>
         <span className="hidden sm:inline-flex text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)' }}>{visible.length} registros</span>
       </div>
+
+      {!temCartela && !isLoading ? (
+        <div className="p-6 text-center shadow-sm" style={{ background: 'var(--surface)', border: '1px dashed var(--border)', borderRadius: 'var(--radius)' }}>
+          <p className="font-display font-bold" style={{ color: 'var(--fg)' }}>Sem cartelas atribuídas</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>{isAdmin ? 'Você (admin) precisa atribuir cartelas a si mesmo para vender.' : 'Peça ao admin para atribuir cartelas a você.'}</p>
+          {isAdmin && (
+            <Link to="/cartelas" className="btn btn-primary mt-4 inline-flex">Atribuir cartela →</Link>
+          )}
+        </div>
+      ) : null}
 
       <div className="p-5 md:p-6 shadow-sm" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
         <h2 className="font-display font-bold" style={{ color: 'var(--fg)' }}>Nova venda</h2>
@@ -81,7 +95,7 @@ export default function Vendas() {
               className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none"
               style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
             />
-            {cartelas && cartelas.length > 0 && <span className="text-xs" style={{ color: 'var(--muted)' }}>Suas cartelas: {cartelas.filter((c) => c.seller_id === profile?.id && c.status === 'alocado').map((c) => `${c.start_int}—${c.end_int}`).join(', ') || 'nenhuma (peça ao admin)'}</span>}
+            <span className="text-xs" style={{ color: 'var(--muted)' }}>Suas cartelas: {minhasCartelas.map((c) => `${c.start_int}—${c.end_int}`).join(', ') || 'nenhuma'}</span>
           </label>
           <label className="block">
             <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Status *</span>
