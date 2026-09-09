@@ -1,0 +1,5 @@
+[api]
+enabled = true
+
+[functions.create-vendedor]
+verify_jwt = true

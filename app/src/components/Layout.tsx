@@ -44,13 +44,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Link>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:block text-right leading-tight">
+            <Link to="/perfil" className="hidden sm:block text-right leading-tight hover:opacity-80">
               <p className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>{profile.name}</p>
-              <p className="text-xs capitalize" style={{ color: 'var(--muted)' }}>{profile.role}</p>
-            </div>
-            <div className="w-8 h-8 rounded-full grid place-items-center text-xs font-bold" style={{ background: 'var(--night)', color: 'var(--bg)' }}>
+              <p className="text-xs capitalize" style={{ color: 'var(--muted)' }}>{profile.role} · Perfil</p>
+            </Link>
+            <Link to="/perfil" className="w-8 h-8 rounded-full grid place-items-center text-xs font-bold" style={{ background: 'var(--night)', color: 'var(--bg)' }}>
               {profile.name.slice(0, 2).toUpperCase()}
-            </div>
+            </Link>
             <button
               onClick={async () => {
                 await signOut()
@@ -75,15 +75,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <NavLink to="/" active={loc.pathname === '/'}>Dashboard</NavLink>
             <NavLink to="/cartelas" active={loc.pathname.startsWith('/cartelas')}>Cartelas</NavLink>
             <NavLink to="/vendas" active={loc.pathname.startsWith('/vendas')}>Minhas vendas</NavLink>
+            <NavLink to="/perfil" active={loc.pathname.startsWith('/perfil')}>Perfil</NavLink>
+            {profile.role === 'admin' && <NavLink to="/admin/vendedores" active={loc.pathname.startsWith('/admin/vendedores')}>Vendedores</NavLink>}
           </div>
         </nav>
         <main className="flex-1 min-w-0 pb-16 md:pb-0">{children}</main>
       </div>
 
       <nav className="md:hidden fixed bottom-0 inset-x-0 flex z-20" style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)' }}>
-        <Mob to="/" label="Dashboard" active={loc.pathname === '/'} />
+        <Mob to="/" label="Dash" active={loc.pathname === '/'} />
         <Mob to="/cartelas" label="Cartelas" active={loc.pathname.startsWith('/cartelas')} />
         <Mob to="/vendas" label="Vendas" active={loc.pathname.startsWith('/vendas')} />
+        <Mob to="/perfil" label="Perfil" active={loc.pathname.startsWith('/perfil')} />
+        {profile.role === 'admin' && <Mob to="/admin/vendedores" label="Vend." active={loc.pathname.startsWith('/admin/vendedores')} />}
+        <button onClick={async () => { await signOut(); nav('/login') }} className="flex-1 py-3 text-center text-sm font-bold" style={{ color: 'var(--danger)', background: 'transparent' }}>Sair</button>
       </nav>
     </div>
   )
