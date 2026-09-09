@@ -60,23 +60,33 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[24px] bg-borromeu-800 text-white p-6 md:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm overflow-hidden relative">
-        <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
+      <div
+        className="p-6 md:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm overflow-hidden relative"
+        style={{
+          borderRadius: 'var(--radius)',
+          background: 'var(--night)',
+          color: 'var(--bg)',
+          border: '1px solid color-mix(in oklch, white 8%, transparent)',
+        }}
+      >
+        <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full blur-2xl" style={{ background: 'color-mix(in oklch, var(--accent) 22%, transparent)' }} />
         <div className="relative">
-          <p className="text-xs tracking-[0.18em] font-bold text-white/60 uppercase">Visão geral</p>
-          <h1 className="font-display font-black text-[28px] md:text-[34px] leading-none mt-1">Dashboard</h1>
-          <p className="text-sm text-white/70 mt-1">{isAdmin ? 'Todos os vendedores' : 'Seus números e vendas'} {edition ? `· ${edition.name}` : ''}</p>
+          <p className="text-xs tracking-[0.14em] font-semibold uppercase" style={{ color: 'var(--accent-soft)' }}>Visão geral</p>
+          <h1 className="font-display text-[28px] md:text-[34px] leading-none mt-1" style={{ color: 'white' }}>Dashboard</h1>
+          <p className="text-sm mt-1" style={{ color: 'color-mix(in oklch, white 72%, transparent)' }}>
+            {isAdmin ? 'Todos os vendedores' : 'Seus números e vendas'} {edition ? `· ${edition.name}` : ''}
+          </p>
         </div>
-        <button onClick={handlePdf} className="relative inline-flex items-center gap-2 rounded-full bg-white text-borromeu-800 px-5 py-2.5 text-sm font-bold hover:bg-stone-50 transition shadow-sm">
+        <button onClick={handlePdf} className="btn btn-secondary relative">
           ⤓ Exportar PDF
-          <span className="text-xs font-normal text-stone-500">c/ data/hora</span>
+          <span className="text-xs font-normal" style={{ color: 'var(--muted)' }}>c/ data/hora</span>
         </button>
       </div>
 
       {isLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-28 rounded-[20px] bg-white border border-stone-200 animate-pulse" />
+            <div key={i} className="h-28 animate-pulse" style={{ borderRadius: 'var(--radius)', background: 'var(--surface)', border: '1px solid var(--border)' }} />
           ))}
         </div>
       ) : (
@@ -89,33 +99,56 @@ export default function Dashboard() {
       )}
 
       <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-4">
-        <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm">
+        <div className="p-5 shadow-sm" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
           <div className="flex items-center justify-between">
-            <h2 className="font-display font-bold text-stone-900">Ranking vendedores</h2>
-            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-stone-100 text-stone-600">{ranking.length} ativos</span>
+            <h2 className="font-display font-bold" style={{ color: 'var(--fg)' }}>Ranking vendedores</h2>
+            <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{ background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)' }}>{ranking.length} ativos</span>
           </div>
           <div className="mt-4 space-y-3">
             {ranking.map(([seller, qtd], idx) => (
-              <div key={seller} className="flex items-center gap-3 rounded-xl border border-stone-100 bg-stone-50/50 px-3 py-3">
-                <span className={`w-8 h-8 rounded-xl grid place-items-center text-xs font-black ${idx === 0 ? 'bg-amber-400 text-stone-900' : idx === 1 ? 'bg-stone-200 text-stone-700' : 'bg-borromeu-100 text-borromeu-700'}`}>{idx + 1}</span>
-                <span className="flex-1 text-sm font-semibold text-stone-800">{seller}</span>
-                <span className="text-sm font-mono font-medium text-stone-600">{qtd} pts</span>
-                <div className="hidden sm:block w-20 h-2 bg-white rounded-full overflow-hidden border border-stone-200">
-                  <div className="h-full bg-borromeu-700" style={{ width: `${(qtd / Math.max(1, total)) * 100}%` }} />
+              <div
+                key={seller}
+                className="flex items-center gap-3 px-3 py-3"
+                style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'color-mix(in oklch, var(--bg) 70%, var(--surface))' }}
+              >
+                <span
+                  className="w-8 h-8 rounded-xl grid place-items-center text-xs font-black"
+                  style={{
+                    background: idx === 0 ? 'var(--accent)' : idx === 1 ? 'var(--stone)' : 'var(--accent-soft)',
+                    color: idx === 0 ? 'white' : 'var(--fg)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  {idx + 1}
+                </span>
+                <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--fg)' }}>{seller}</span>
+                <span className="text-sm font-mono font-medium" style={{ color: 'var(--muted)' }}>{qtd} pts</span>
+                <div className="hidden sm:block w-20 h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                  <div className="h-full" style={{ width: `${(qtd / Math.max(1, total)) * 100}%`, background: 'var(--accent)' }} />
                 </div>
               </div>
             ))}
-            {ranking.length === 0 && <p className="text-sm text-stone-500 py-6 text-center">Nenhuma venda ainda.</p>}
+            {ranking.length === 0 && <p className="text-sm py-6 text-center" style={{ color: 'var(--muted)' }}>Nenhuma venda ainda.</p>}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm">
-          <h2 className="font-display font-bold text-stone-900">Filtros</h2>
-          <p className="text-xs text-stone-500 mt-1">Filtre por vendedor</p>
+        <div className="p-5 shadow-sm" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+          <h2 className="font-display font-bold" style={{ color: 'var(--fg)' }}>Filtros</h2>
+          <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>Filtre por vendedor</p>
           {isAdmin ? (
             <label className="block mt-4">
-              <span className="text-sm font-semibold text-stone-700">Vendedor</span>
-              <select value={filterSeller} onChange={(e) => setFilterSeller(e.target.value)} className="mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm focus:border-borromeu-700 focus:ring-2 focus:ring-borromeu-700/20 focus:outline-none">
+              <span className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>Vendedor</span>
+              <select
+                value={filterSeller}
+                onChange={(e) => setFilterSeller(e.target.value)}
+                className="mt-1.5 w-full px-3 py-2.5 text-sm focus:outline-none"
+                style={{
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--fg)',
+                }}
+              >
                 <option value="all">Todos</option>
                 {allSellers.map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -123,9 +156,9 @@ export default function Dashboard() {
               </select>
             </label>
           ) : (
-            <div className="mt-4 rounded-xl bg-stone-50 border border-stone-200 p-3">
-              <p className="text-sm font-semibold text-stone-800">Seus dados</p>
-              <p className="text-xs text-stone-600 mt-1">Você vê apenas seus registros.</p>
+            <div className="mt-4 p-3" style={{ borderRadius: 'var(--radius-sm)', background: 'var(--bg)', border: '1px solid var(--border)' }}>
+              <p className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>Seus dados</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>Você vê apenas seus registros.</p>
             </div>
           )}
         </div>
@@ -134,13 +167,16 @@ export default function Dashboard() {
   )
 }
 
-function Kpi({ label, value, sub, note, accent, muted }: { label: string; value: string; sub: string; note?: string; accent?: boolean; muted?: boolean }) {
+function Kpi({ label, value, sub, note, accent }: { label: string; value: string; sub: string; note?: string; accent?: boolean; muted?: boolean }) {
+  const style: React.CSSProperties = accent
+    ? { background: 'var(--accent)', color: 'white', border: '1px solid color-mix(in oklch, var(--accent) 30%, transparent)', borderRadius: 'var(--radius)', boxShadow: '0 4px 16px color-mix(in oklch, var(--accent) 30%, transparent)' }
+    : { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--fg)' }
   return (
-    <div className={`rounded-[20px] border p-4 md:p-5 shadow-sm ${accent ? 'bg-borromeu-700 text-white border-borromeu-800' : muted ? 'bg-white border-stone-200' : 'bg-white border-stone-200'}`}>
-      <p className={`text-[11px] tracking-[0.14em] font-bold uppercase ${accent ? 'text-white/70' : 'text-stone-400'}`}>{label}</p>
-      <p className={`font-display font-black text-[26px] md:text-[28px] leading-none mt-2 ${accent ? 'text-white' : 'text-stone-900'}`}>{value}</p>
-      <p className={`text-xs font-semibold mt-1 ${accent ? 'text-white/80' : 'text-stone-600'}`}>{sub}</p>
-      {note && <p className={`text-xs mt-1 ${accent ? 'text-white/60' : 'text-stone-400'}`}>{note}</p>}
+    <div className="p-4 md:p-5 shadow-sm" style={style}>
+      <p className="text-[11px] tracking-[0.14em] font-bold uppercase" style={{ color: accent ? 'color-mix(in oklch, white 70%, transparent)' : 'var(--muted)' }}>{label}</p>
+      <p className="font-display text-[26px] md:text-[28px] leading-none mt-2" style={{ color: accent ? 'white' : 'var(--fg)' }}>{value}</p>
+      <p className="text-xs font-semibold mt-1" style={{ color: accent ? 'color-mix(in oklch, white 80%, transparent)' : 'var(--muted)' }}>{sub}</p>
+      {note && <p className="text-xs mt-1" style={{ color: accent ? 'color-mix(in oklch, white 60%, transparent)' : 'var(--muted)' }}>{note}</p>}
     </div>
   )
 }

@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capela — Sistema de Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg: oklch(97.5% 0.015 75);
+  --surface: oklch(100% 0 0);
+  --fg: oklch(18% 0.035 265);
+  --muted: oklch(56% 0.018 75);
+  --border: oklch(89% 0.02 75);
+  --accent: oklch(69% 0.135 58);
+  --accent-strong: oklch(62% 0.13 55);
+  --accent-soft: oklch(91% 0.05 75);
+  --night: oklch(22% 0.05 265);
+  --night-2: oklch(14% 0.03 270);
+  --stone: oklch(93% 0.015 75);
+  --leaf: oklch(32% 0.04 145);
+  --success: oklch(58% 0.11 145);
+  --danger: oklch(56% 0.16 25);
+  --radius: 18px;
+  --radius-sm: 12px;
+  --font-display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; font-family:var(--font-body); color:var(--fg); background:var(--bg);
+  -webkit-font-smoothing:antialiased; line-height:1.5;
+}
+a{color:inherit}
+img{max-width:100%}
+
+/* topnav */
+.topnav{
+  position:sticky; top:0; z-index:40;
+  backdrop-filter: blur(18px) saturate(1.2);
+  background: color-mix(in oklch, var(--surface) 82%, transparent);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 32px;
+}
+.brand{display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:-0.02em}
+.brand-mark{
+  width:36px; height:36px; border-radius:10px; display:grid; place-items:center;
+  background: var(--night); color: var(--accent-soft); border:1px solid color-mix(in oklch, var(--accent) 30%, transparent);
+}
+.brand-mark svg{width:18px; height:18px}
+.nav-links{display:flex; gap:22px; font-size:13px; font-weight:500; color:var(--muted)}
+.nav-links a{text-decoration:none; padding:6px 0; border-bottom:2px solid transparent}
+.nav-links a.active{color:var(--fg); border-color:var(--accent)}
+.nav-cta{display:flex; align-items:center; gap:12px}
+.btn{
+  appearance:none; border:1px solid transparent; cursor:pointer; font-family:var(--font-body);
+  font-weight:600; font-size:14px; line-height:1; padding:12px 18px; border-radius:999px;
+  transition:all .18s ease; display:inline-flex; align-items:center; justify-content:center; gap:8px; white-space:nowrap;
+}
+.btn-primary{background:var(--accent); color:white; box-shadow:0 4px 16px color-mix(in oklch, var(--accent) 30%, transparent)}
+.btn-primary:hover{background:var(--accent-strong); transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-secondary{background:var(--surface); border-color:var(--border); color:var(--fg)}
+.btn-secondary:hover{border-color:var(--muted); background:var(--stone)}
+.btn-ghost{background:transparent; border-color:var(--border); color:var(--fg)}
+.btn-ghost:hover{background:var(--surface)}
+.btn-dark{background:var(--night); color:var(--bg); border-color:color-mix(in oklch, white 10%, transparent)}
+.btn-dark:hover{background:var(--night-2)}
+.btn:disabled{opacity:.45; cursor:not-allowed; transform:none !important}
+.btn-sm{padding:8px 14px; font-size:13px}
+.btn-lg{padding:16px 26px; font-size:16px}
+.btn-icon{width:40px; height:40px; padding:0; border-radius:50%}
+.btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+/* hero */
+.hero{
+  position:relative; overflow:hidden; background:var(--night-2);
+  min-height:520px; display:grid; align-items:end;
+}
+.hero-bg{
+  position:absolute; inset:0;
+}
+.hero-bg img{width:100%; height:100%; object-fit:cover; object-position:center 35%; opacity:.92}
+.hero-bg::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg, oklch(14% 0.03 270 / 35%) 0%, oklch(14% 0.03 270 / 10%) 35%, oklch(97% 0.015 75 / 92%) 88%, var(--bg) 100%)}
+.hero-content{
+  position:relative; z-index:2; max-width:1180px; width:100%; margin:0 auto; padding:48px 32px 44px;
+  display:grid; grid-template-columns:1.25fr .75fr; gap:32px; align-items:end;
+}
+.eyebrow{font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); font-weight:600}
+.hero h1{
+  font-family:var(--font-display); font-size: clamp(38px, 5vw, 64px); line-height:.95; letter-spacing:-0.02em; margin:12px 0 16px; color:white;
+  text-shadow:0 6px 24px oklch(14% 0.03 270 / 40%);
+}
+.hero h1 em{font-style:italic; font-weight:400; color:var(--accent-soft)}
+.hero p{color:color-mix(in oklch, white 82%, transparent); font-size:17px; line-height:1.6; max-width:560px}
+.hero-card{
+  background: color-mix(in oklch, var(--surface) 92%, transparent);
+  backdrop-filter: blur(16px);
+  border:1px solid color-mix(in oklch, white 45%, transparent);
+  border-radius:20px; padding:22px; box-shadow:0 16px 40px oklch(14% 0.03 270 / 18%);
+}
+.hero-card-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px}
+.mini-badge{font-family:var(--font-mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; background:var(--night); color:var(--accent-soft); padding:6px 10px; border-radius:999px}
+.hero-tokens{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+.tok-mini{border-radius:12px; overflow:hidden; border:1px solid var(--border); background:var(--surface)}
+.tok-mini-swatch{height:56px}
+.tok-mini-meta{padding:8px 10px}
+.tok-mini-meta strong{font-size:12px; display:block}
+.tok-mini-meta span{font-family:var(--font-mono); font-size:10px; color:var(--muted)}
+.hero-actions{display:flex; gap:10px; margin-top:18px}
+
+/* sections */
+section{max-width:1180px; margin:0 auto; padding:56px 32px}
+.section-head{display:flex; align-items:flex-start; justify-content:space-between; gap:24px; margin-bottom:32px; border-bottom:1px solid var(--border); padding-bottom:20px}
+.section-head h2{font-family:var(--font-display); font-size:36px; line-height:1; letter-spacing:-0.02em; margin:0}
+.section-head p{color:var(--muted); font-size:14px; line-height:1.6; max-width:520px; margin:6px 0 0}
+.kicker{font-family:var(--font-mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-strong); font-weight:600; margin-bottom:8px}
+
+/* palette */
+.palette-grid{display:grid; grid-template-columns:repeat(12,1fr); gap:16px}
+.color-card{border-radius:16px; overflow:hidden; border:1px solid var(--border); background:var(--surface); grid-column:span 4}
+.color-card.wide{grid-column:span 6}
+.color-card.full{grid-column:span 12; display:grid; grid-template-columns:1fr 1fr}
+.swatch{height:148px; position:relative; display:flex; align-items:flex-end; padding:14px}
+.swatch.dark{color:white}
+.swatch.light{color:var(--fg)}
+.swatch-label{font-family:var(--font-mono); font-size:11px; letter-spacing:.06em; background:color-mix(in oklch, var(--surface) 92%, transparent); padding:6px 8px; border-radius:8px; border:1px solid var(--border)}
+.color-meta{padding:14px 16px}
+.color-meta h4{margin:0; font-size:15px; font-weight:700}
+.color-meta p{margin:4px 0 10px; font-size:13px; color:var(--muted); line-height:1.5}
+.token-row{display:flex; flex-wrap:wrap; gap:6px}
+.token-pill{font-family:var(--font-mono); font-size:11px; padding:6px 8px; border-radius:8px; background:var(--bg); border:1px solid var(--border); cursor:pointer}
+.token-pill:hover{border-color:var(--accent)}
+.scale-row{display:flex; gap:6px; margin-top:12px}
+.scale-step{flex:1; height:36px; border-radius:8px; border:1px solid color-mix(in oklch, var(--border) 80%, transparent)}
+.neutrals{display:grid; grid-template-columns:repeat(5,1fr); gap:12px}
+.neutral{border-radius:14px; border:1px solid var(--border); overflow:hidden; background:var(--surface)}
+.neutral-swatch{height:88px}
+.neutral-meta{padding:10px 12px; font-family:var(--font-mono); font-size:11px}
+.neutral-meta strong{font-family:var(--font-body); font-size:13px}
+
+/* typography */
+.type-grid{display:grid; grid-template-columns:1fr 1fr; gap:24px}
+.type-card{background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:24px}
+.type-sample-title{font-family:var(--font-display); font-size:42px; line-height:.95; letter-spacing:-0.02em}
+.type-sample-body{font-size:16px; line-height:1.7; color:color-mix(in oklch, var(--fg) 84%, transparent)}
+.spec-table{width:100%; border-collapse:collapse; font-size:13px; margin-top:16px}
+.spec-table th{font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); text-align:left; padding:8px 0; border-bottom:1px solid var(--border)}
+.spec-table td{padding:10px 0; border-bottom:1px solid var(--border); vertical-align:top}
+.spec-table td:last-child{color:var(--muted); font-family:var(--font-mono); font-size:12px}
+
+/* icons */
+.icon-toolbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:20px}
+.search{flex:1; min-width:220px; position:relative}
+.search input{width:100%; padding:12px 14px 12px 38px; border-radius:999px; border:1px solid var(--border); background:var(--surface); font-family:var(--font-body); font-size:14px}
+.search svg{position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--muted)}
+.filter-chip{padding:8px 14px; border-radius:999px; border:1px solid var(--border); background:var(--surface); font-size:13px; font-weight:500; cursor:pointer}
+.filter-chip.active{background:var(--night); color:white; border-color:var(--night)}
+.icon-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:14px}
+.icon-cell{background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px 14px; text-align:center; transition:all .15s}
+.icon-cell:hover{border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 20px oklch(14% 0.03 270 / 8%)}
+.icon-box{width:44px; height:44px; border-radius:12px; background:var(--bg); border:1px solid var(--border); display:grid; place-items:center; margin:0 auto 10px; color:var(--night)}
+.icon-cell strong{font-size:12px; display:block; font-weight:600}
+.icon-cell span{font-family:var(--font-mono); font-size:10px; color:var(--muted)}
+.icon-cell.lg{grid-column:span 2}
+.icon-preview-row{display:flex; gap:12px; justify-content:center; margin-top:8px}
+.dot{width:28px; height:28px; border-radius:50%; display:grid; place-items:center; border:1px solid var(--border)}
+.dot.dark{background:var(--night); color:var(--accent-soft); border-color:transparent}
+.dot.accent{background:var(--accent); color:white; border-color:transparent}
+
+/* buttons */
+.btn-showcase{display:grid; grid-template-columns:1fr 1fr; gap:24px}
+.showcase-col{background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:22px}
+.showcase-col h4{margin:0 0 14px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px}
+.showcase-col h4 i{width:8px; height:8px; border-radius:50%; background:var(--accent)}
+.btn-row{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:16px}
+.btn-row + .label{font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+.state-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px}
+.state-cell{text-align:center; font-family:var(--font-mono); font-size:11px; color:var(--muted)}
+.state-cell .btn{width:100%}
+.specs{font-size:12px; color:var(--muted); line-height:1.6; margin-top:12px; background:var(--bg); padding:12px; border-radius:12px; border:1px dashed var(--border)}
+
+/* components */
+.comp-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
+.comp-card{background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:18px}
+.comp-card h4{margin:0 0 12px; font-size:13px; font-weight:700; letter-spacing:-0.01em}
+.tag{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:600; border:1px solid var(--border); background:var(--bg)}
+.tag.accent{background:var(--accent); color:white; border-color:transparent}
+.tag.night{background:var(--night); color:var(--accent-soft); border-color:transparent}
+.input{width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:var(--surface); font-family:var(--font-body); font-size:14px}
+.input:focus{outline:2px solid var(--accent); outline-offset:0; border-color:transparent}
+.input.error{border-color:var(--danger); background:color-mix(in oklch, var(--danger) 6%, var(--surface))}
+.alert{padding:12px 14px; border-radius:12px; font-size:13px; display:flex; gap:10px; align-items:flex-start; border:1px solid}
+.alert.success{background:color-mix(in oklch, var(--success) 8%, var(--surface)); border-color:color-mix(in oklch, var(--success) 18%, transparent); color:var(--leaf)}
+.alert.info{background:color-mix(in oklch, var(--night) 6%, var(--surface)); border-color:color-mix(in oklch, var(--night) 15%, transparent)}
+.mock-card{border-radius:16px; overflow:hidden; border:1px solid var(--border); background:var(--surface)}
+.mock-card img{width:100%; height:160px; object-fit:cover}
+.mock-body{padding:14px}
+.mock-body h5{margin:0; font-size:15px}
+.mock-body p{margin:4px 0 0; font-size:13px; color:var(--muted)}
+
+/* footer example */
+.demo-wrap{background:var(--night); color:var(--bg); border-radius:20px; overflow:hidden; border:1px solid color-mix(in oklch, white 8%, transparent)}
+.demo-head{padding:18px 22px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid color-mix(in oklch, white 10%, transparent)}
+.demo-grid{display:grid; grid-template-columns:1.2fr .8fr; gap:0}
+.demo-left{padding:22px; border-right:1px solid color-mix(in oklch, white 8%, transparent)}
+.demo-right{padding:22px; background:color-mix(in oklch, var(--night-2) 100%, transparent)}
+.stat{font-family:var(--font-mono); font-size:12px; opacity:.7}
+.stat strong{font-family:var(--font-display); font-size:32px; color:var(--accent-soft); display:block; line-height:1}
+
+/* responsive */
+@media(max-width:920px){
+  .topnav{padding:12px 18px}
+  .nav-links{display:none}
+  .hero-content{grid-template-columns:1fr; padding:28px 18px 32px}
+  section{padding:32px 18px}
+  .palette-grid{grid-template-columns:1fr}
+  .color-card,.color-card.wide,.color-card.full{grid-column:span 1}
+  .color-card.full{grid-template-columns:1fr}
+  .neutrals{grid-template-columns:repeat(2,1fr)}
+  .type-grid{grid-template-columns:1fr}
+  .icon-grid{grid-template-columns:repeat(3,1fr)}
+  .btn-showcase{grid-template-columns:1fr}
+  .comp-grid{grid-template-columns:1fr}
+  .demo-grid{grid-template-columns:1fr}
+  .demo-left{border-right:none; border-bottom:1px solid color-mix(in oklch, white 8%, transparent)}
+}
+.toast{
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(80px);
+  background:var(--night); color:white; padding:12px 18px; border-radius:999px; font-size:13px; font-weight:500;
+  opacity:0; transition:all .3s; z-index:99; display:flex; gap:8px; align-items:center; border:1px solid color-mix(in oklch, white 12%, transparent)
+}
+.toast.show{transform:translateX(-50%) translateY(0); opacity:1}
+</style>
+</head>
+<body>
+
+<nav class="topnav" data-od-id="topnav">
+  <div class="brand" data-od-id="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M8 9h8M9 21h6"/><circle cx="12" cy="7" r="1.2" fill="currentColor" stroke="none"/></svg>
+    </div>
+    <span>Capela<span style="font-weight:400; color:var(--muted)"> · Design System</span></span>
+  </div>
+  <div class="nav-links">
+    <a href="#paleta" class="active">Paleta</a>
+    <a href="#tipografia">Tipografia</a>
+    <a href="#icones">Ícones</a>
+    <a href="#botoes">Botões</a>
+    <a href="#componentes">Componentes</a>
+  </div>
+  <div class="nav-cta">
+    <button class="btn btn-ghost btn-sm" onclick="copyTokens()">Copiar tokens</button>
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('paleta').scrollTo ? document.getElementById('paleta').scrollTo({top:0}) : window.scrollTo({top: document.getElementById('paleta').offsetTop - 80, behavior:'smooth'})">Explorar paleta</button>
+  </div>
+</nav>
+
+<header class="hero" data-od-id="hero">
+  <div class="hero-bg"><img src="backgroud-capela.png" alt="Capela de madeira iluminada sob céu estrelado com Via Láctea" width="1122" height="1402"></div>
+  <div class="hero-content">
+    <div>
+      <div class="eyebrow">Sistema · Luz noturna · Madeira & Céu</div>
+      <h1>Um sistema que<br><em>acende</em> no escuro.</h1>
+      <p>Inspirado na luz âmbar da capela contra o azul profundo da noite. Uma paleta contemplativa, tipografia serena e componentes que carregam o calor da madeira e a vastidão do céu estrelado.</p>
+      <div style="display:flex; gap:12px; margin-top:22px; flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="window.scrollTo({top: document.getElementById('icones').offsetTop - 80, behavior:'smooth'})">Ver ícones e botões</button>
+        <button class="btn btn-ghost" style="background:color-mix(in oklch, white 92%, transparent); backdrop-filter:blur(8px)" onclick="downloadCSS()">Baixar CSS tokens</button>
+      </div>
+      <div style="display:flex; gap:18px; margin-top:18px; font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:color-mix(in oklch, white 70%, transparent)">
+        <span>● 6 cores núcleo</span><span>● 24 ícones</span><span>● 5 estilos de botão</span>
+      </div>
+    </div>
+    <div class="hero-card" data-od-id="hero-card">
+      <div class="hero-card-head">
+        <strong style="font-size:13px">Tokens ao vivo</strong>
+        <span class="mini-badge">OKLCH · WCAG AA</span>
+      </div>
+      <div class="hero-tokens">
+        <div class="tok-mini"><div class="tok-mini-swatch" style="background:var(--night)"></div><div class="tok-mini-meta"><strong>Noite</strong><span>#0E1E3A</span></div></div>
+        <div class="tok-mini"><div class="tok-mini-swatch" style="background:var(--accent)"></div><div class="tok-mini-meta"><strong>Âmbar</strong><span>#D98E2E</span></div></div>
+        <div class="tok-mini"><div class="tok-mini-swatch" style="background:var(--bg); border-top:1px solid var(--border)"></div><div class="tok-mini-meta"><strong>Pedra</strong><span>#F7F2E6</span></div></div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; text-align:center; font-family:var(--font-mono); font-size:11px">
+        <div><strong style="display:block; font-family:var(--font-body); font-size:18px">4.5:1</strong>contraste</div>
+        <div><strong style="display:block; font-family:var(--font-body); font-size:18px">18px</strong>raio padrão</div>
+        <div><strong style="display:block; font-family:var(--font-body); font-size:18px">1</strong>acento</div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn btn-dark btn-sm" style="flex:1" onclick="copyTokens()">Copiar :root</button>
+        <button class="btn btn-ghost btn-sm" onclick="togglePreview()">Preview escuro</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- PALETA -->
+<section id="paleta" data-od-id="paleta">
+  <div class="section-head">
+    <div>
+      <div class="kicker">01 — Cor</div>
+      <h2>Paleta completa</h2>
+      <p>Extraída diretamente da fotografia: o azul noturno do zênite, o âmbar da luz interna, a madeira queimada, a pedra do piso e o verde contido da vegetação. Cada cor com escala e uso.</p>
+    </div>
+    <div style="font-family:var(--font-mono); font-size:11px; color:var(--muted); text-align:right">FIGMA · TOKENS STUDIO<br>OKLCH · sRGB fallback</div>
+  </div>
+
+  <div class="palette-grid">
+    <!-- Noite -->
+    <div class="color-card" data-od-id="color-noite">
+      <div class="swatch dark" style="background:oklch(18% 0.035 265)">
+        <span class="swatch-label" style="color:var(--fg)">--fg · Noite Profunda</span>
+      </div>
+      <div class="color-meta">
+        <h4>Noite Profunda</h4>
+        <p>Cor de texto e fundos escuros. Céu do zênite. Uso: cabeçalhos, navegação, botões dark.</p>
+        <div class="token-row">
+          <button class="token-pill" onclick="copyText('#0E1E3A')">#0E1E3A</button>
+          <button class="token-pill" onclick="copyText('oklch(18% 0.035 265)')">oklch(18% 0.035 265)</button>
+          <button class="token-pill" onclick="copyText('--fg')">--fg</button>
+        </div>
+        <div class="scale-row">
+          <div class="scale-step" style="background:oklch(14% 0.03 270)" title="950"></div>
+          <div class="scale-step" style="background:oklch(18% 0.035 265)" title="900"></div>
+          <div class="scale-step" style="background:oklch(22% 0.05 265)" title="800"></div>
+          <div class="scale-step" style="background:oklch(34% 0.05 265)" title="700"></div>
+          <div class="scale-step" style="background:oklch(52% 0.03 265)" title="500"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Âmbar -->
+    <div class="color-card" data-od-id="color-ambar">
+      <div class="swatch light" style="background:oklch(69% 0.135 58)">
+        <span class="swatch-label">--accent · Luz Âmbar</span>
+      </div>
+      <div class="color-meta">
+        <h4>Luz Âmbar</h4>
+        <p>O único acento saturado. Luz interna da capela. Uso: CTA primário, foco, seleção. Máx. 2x por tela.</p>
+        <div class="token-row">
+          <button class="token-pill" onclick="copyText('#D98E2E')">#D98E2E</button>
+          <button class="token-pill" onclick="copyText('oklch(69% 0.135 58)')">oklch(69% 0.135 58)</button>
+          <button class="token-pill" onclick="copyText('--accent')">--accent</button>
+        </div>
+        <div class="scale-row">
+          <div class="scale-step" style="background:oklch(82% 0.08 70)"></div>
+          <div class="scale-step" style="background:oklch(69% 0.135 58)"></div>
+          <div class="scale-step" style="background:oklch(62% 0.13 55)"></div>
+          <div class="scale-step" style="background:oklch(50% 0.11 55)"></div>
+          <div class="scale-step" style="background:oklch(42% 0.09 55)"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Madeira -->
+    <div class="color-card" data-od-id="color-madeira">
+      <div class="swatch dark" style="background:oklch(45% 0.09 55); color:white">
+        <span class="swatch-label" style="color:var(--fg)">Madeira Queimada</span>
+      </div>
+      <div class="color-meta">
+        <h4>Madeira Queimada</h4>
+        <p>Vigas e portas. Tom de apoio para hover do âmbar e detalhes estruturais. Contraste 7.2:1 com pedra.</p>
+        <div class="token-row">
+          <button class="token-pill" onclick="copyText('#8A4A1E')">#8A4A1E</button>
+          <button class="token-pill" onclick="copyText('oklch(45% 0.09 55)')">oklch(45% 0.09 55)</button>
+        </div>
+        <div class="scale-row">
+          <div class="scale-step" style="background:oklch(62% 0.12 55)"></div>
+          <div class="scale-step" style="background:oklch(45% 0.09 55)"></div>
+          <div class="scale-step" style="background:oklch(34% 0.07 55)"></div>
+          <div class="scale-step" style="background:oklch(28% 0.05 55)"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Pedra -->
+    <div class="color-card wide" data-od-id="color-pedra">
+      <div class="swatch light" style="background:oklch(97.5% 0.015 75); border-bottom:1px solid var(--border)">
+        <span class="swatch-label">--bg · Pedra Clara</span>
+      </div>
+      <div class="color-meta">
+        <h4>Pedra Clara</h4>
+        <p>Fundo principal. Piso iluminado e paredes externas sob luz. Conforto visual noturno sem branco puro.</p>
+        <div class="token-row">
+          <button class="token-pill" onclick="copyText('#F7F2E6')">#F7F2E6</button>
+          <button class="token-pill" onclick="copyText('--bg')">--bg</button>
+        </div>
+      </div>
+    </div>
+    <!-- Céu -->
+    <div class="color-card wide" data-od-id="color-ceu">
+      <div class="swatch dark" style="background:oklch(22% 0.05 265); color:white">
+        <span class="swatch-label" style="color:var(--fg)">Via Láctea — Azul Noite</span>
+      </div>
+      <div class="color-meta">
+        <h4>Via Láctea</h4>
+        <p>Azul médio do céu estrelado. Uso: fundos de seção escura, gráficos, ilustrações. Contraste 12:1 com âmbar.</p>
+        <div class="token-row">
+          <button class="token-pill" onclick="copyText('#14295A')">#14295A</button>
+          <button class="token-pill" onclick="copyText('oklch(22% 0.05 265)')">oklch(22% 0.05 265)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-card full" data-od-id="color-semanticas">
+      <div style="padding:18px; border-right:1px solid var(--border)">
+        <h4 style="margin:0; font-size:14px">Semânticas</h4>
+        <p style="font-size:13px; color:var(--muted); margin:6px 0 14px">Para feedback, sempre sobre fundo claro com borda sutil.</p>
+        <div style="display:flex; flex-direction:column; gap:10px">
+          <div style="display:flex; align-items:center; gap:10px"><span style="width:28px; height:28px; border-radius:8px; background:var(--success); display:inline-block; border:1px solid color-mix(in oklch, var(--success) 30%, white)"></span><span style="font-size:13px; font-weight:600">Sucesso</span><span style="font-family:var(--font-mono); font-size:11px; color:var(--muted)">oklch(58% 0.11 145) · em confirmações</span></div>
+          <div style="display:flex; align-items:center; gap:10px"><span style="width:28px; height:28px; border-radius:8px; background:var(--danger); display:inline-block"></span><span style="font-size:13px; font-weight:600">Atenção</span><span style="font-family:var(--font-mono); font-size:11px; color:var(--muted)">oklch(56% 0.16 25) · erros / alertas</span></div>
+          <div style="display:flex; align-items:center; gap:10px"><span style="width:28px; height:28px; border-radius:8px; background:oklch(65% 0.1 240); display:inline-block"></span><span style="font-size:13px; font-weight:600">Informativo</span><span style="font-family:var(--font-mono); font-size:11px; color:var(--muted)">para tooltips</span></div>
+        </div>
+      </div>
+      <div style="padding:18px; background:var(--bg)">
+        <h4 style="margin:0; font-size:14px">Regras de uso da cor</h4>
+        <ul style="margin:10px 0 0; padding-left:18px; font-size:13px; color:var(--muted); line-height:1.7">
+          <li><strong style="color:var(--fg)">1 acento por viewport:</strong> CTA primário + um detalhe (eyebrow ou ponto) — nunca pintar cards inteiros de âmbar.</li>
+          <li><strong style="color:var(--fg)">Fundo nunca saturado:</strong> âmbar só em elementos pequenos (≤ 180px). Fundos sempre pedra, branco ou noite.</li>
+          <li><strong style="color:var(--fg)">Hover:</strong> move L ±0.06 (âmbar mais escuro), nunca clareia texto sobre fundo.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:18px">
+    <h4 style="font-size:13px; margin:0 0 10px">Escala neutra (pedra → noite)</h4>
+    <div class="neutrals" data-od-id="neutrals">
+      <div class="neutral"><div class="neutral-swatch" style="background:oklch(98% 0.01 75)"></div><div class="neutral-meta"><strong>50</strong><br>#FDFCFA · super claro</div></div>
+      <div class="neutral"><div class="neutral-swatch" style="background:oklch(93% 0.015 75)"></div><div class="neutral-meta"><strong>100</strong><br>#EAE0CC · stone</div></div>
+      <div class="neutral"><div class="neutral-swatch" style="background:oklch(89% 0.02 75)"></div><div class="neutral-meta"><strong>200</strong><br>#E9DDC7 · border</div></div>
+      <div class="neutral"><div class="neutral-swatch" style="background:oklch(56% 0.018 75)"></div><div class="neutral-meta" style="color:white; background:oklch(56% 0.018 75)"><strong>600</strong><br>#8E8478 · muted</div></div>
+      <div class="neutral"><div class="neutral-swatch" style="background:oklch(18% 0.035 265)"></div><div class="neutral-meta" style="color:white; background:oklch(18% 0.035 265)"><strong>900</strong><br>#0E1E3A · fg</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TIPOGRAFIA -->
+<section id="tipografia" data-od-id="tipografia">
+  <div class="section-head">
+    <div>
+      <div class="kicker">02 — Tipografia</div>
+      <h2>Serena & legível</h2>
+      <p>Instrument Serif para títulos — solenidade com leveza. Inter para corpo — neutra e altamente legível. JetBrains Mono para dados e labels.</p>
+    </div>
+  </div>
+  <div class="type-grid">
+    <div class="type-card" data-od-id="type-display">
+      <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)">Display · Instrument Serif</div>
+      <div class="type-sample-title" style="margin-top:10px">Luz que <em style="color:var(--accent-strong)">acolhe</em></div>
+      <div style="font-size:13px; color:var(--muted); margin-top:8px">64px / -0.02em / 0.95 line-height · usado em H1–H2</div>
+      <table class="spec-table">
+        <tr><th>Estilo</th><th>Uso</th><th>Tamanho</th></tr>
+        <tr><td style="font-family:var(--font-display); font-size:22px">Título grande</td><td>Hero, capa</td><td>56–64px</td></tr>
+        <tr><td style="font-family:var(--font-display); font-size:18px">Título seção</td><td>H2</td><td>32–36px</td></tr>
+        <tr><td style="font-family:var(--font-display); font-style:italic">Itálico de ênfase</td><td>Destaque pontual</td><td>mesmo peso</td></tr>
+      </table>
+    </div>
+    <div class="type-card" data-od-id="type-body">
+      <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)">Body · Inter · 400/500/600</div>
+      <p class="type-sample-body" style="margin-top:12px"><strong style="color:var(--fg)">A capela permanece aberta ao entardecer.</strong> Texto corrido em 16px/1.7 para leitura confortável sobre fundo pedra. Títulos secundários em 600, nunca em serif para manter hierarquia clara.</p>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap">
+        <span style="padding:6px 10px; border-radius:8px; background:var(--bg); border:1px solid var(--border); font-size:13px; font-weight:600">Semibold 600</span>
+        <span style="padding:6px 10px; border-radius:8px; background:var(--bg); border:1px solid var(--border); font-size:13px">Regular 400</span>
+        <span style="padding:6px 10px; border-radius:8px; background:var(--night); color:white; font-family:var(--font-mono); font-size:12px">Mono 12px labels</span>
+      </div>
+      <table class="spec-table">
+        <tr><th>Token</th><th>Valor</th><th>Uso</th></tr>
+        <tr><td>body</td><td>16px / 1.7</td><td>parágrafos</td></tr>
+        <tr><td>small</td><td>13px / 1.6</td><td>legendas</td></tr>
+        <tr><td>mono</td><td>11–12px / .12em</td><td>eyebrow, badge</td></tr>
+      </table>
+    </div>
+  </div>
+  <div style="margin-top:18px; background:var(--night); color:var(--bg); border-radius:18px; padding:24px; display:flex; gap:24px; align-items:center; flex-wrap:wrap">
+    <div style="flex:1; min-width:260px">
+      <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; opacity:.6">Exemplo em contexto escuro</div>
+      <div style="font-family:var(--font-display); font-size:28px; margin-top:6px">Encontro sob as <span style="color:var(--accent-soft)">estrelas</span></div>
+      <p style="opacity:.75; font-size:14px; line-height:1.6; margin:6px 0 0">Texto claro sobre noite com 15.8:1 de contraste. Nunca usar muted claro sobre noite — sempre pedra 97% ou branco.</p>
+    </div>
+    <div style="font-family:var(--font-mono); font-size:11px; background:color-mix(in oklch, white 8%, transparent); padding:14px; border-radius:12px; border:1px solid color-mix(in oklch, white 12%, transparent)">
+      AA · 15.8:1<br>AAA para 18px+<br>validado
+    </div>
+  </div>
+</section>
+
+<!-- ICONES -->
+<section id="icones" data-od-id="icones">
+  <div class="section-head">
+    <div>
+      <div class="kicker">03 — Ícones</div>
+      <h2>Biblioteca — 24 glifos</h2>
+      <p>Traço de 1.6px, cantos arredondados, grade 24px. Inspirados na capela: estrutura de madeira, luz, noite e acolhimento. Três pesos visuais: contorno, sólido suave e duotone para fundo escuro.</p>
+    </div>
+    <div style="display:flex; gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="setIconStyle('outline')">Contorno</button>
+      <button class="btn btn-primary btn-sm" onclick="setIconStyle('solid')">Sólido</button>
+    </div>
+  </div>
+
+  <div class="icon-toolbar">
+    <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6"/><path d="M15 15l4 4"/></svg><input id="iconSearch" placeholder="Buscar ícone (ex: cruz, estrela, mapa)" oninput="filterIcons(this.value)"></div>
+    <button class="filter-chip active" data-filter="todos" onclick="filterCat('todos')">Todos</button>
+    <button class="filter-chip" data-filter="estrutura" onclick="filterCat('estrutura')">Estrutura</button>
+    <button class="filter-chip" data-filter="navegacao" onclick="filterCat('navegacao')">Navegação</button>
+    <button class="filter-chip" data-filter="acao" onclick="filterCat('acao')">Ação</button>
+  </div>
+
+  <div class="icon-grid" id="iconGrid" data-od-id="icon-grid">
+    <!-- 24 icons -->
+    <div class="icon-cell" data-name="cruz capela" data-cat="estrutura"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M9 9h6"/><circle cx="12" cy="7" r="1"/></svg></div><strong>Cruz</strong><span>cross</span><div class="icon-preview-row"><span class="dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M9 9h6"/></svg></span><span class="dot dark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6"><path d="M12 3v18M9 9h6"/></svg></span><span class="dot accent"><svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1.6"><path d="M12 3v18M9 9h6"/></svg></span></div></div>
+    <div class="icon-cell" data-name="estrela Via Láctea" data-cat="estrutura"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l1.7 5.2H19l-4.3 3.1 1.6 5.2L12 14.3 7.7 16.5l1.6-5.2L5 8.2h5.3z"/></svg></div><strong>Estrela</strong><span>star</span></div>
+    <div class="icon-cell" data-name="lua noite" data-cat="estrutura"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.5A8.5 8.5 0 1 1 11.5 3a6.5 6.5 0 0 0 9.5 9.5z"/></svg></div><strong>Lua</strong><span>moon</span></div>
+    <div class="icon-cell" data-name="capela estrutura madeira" data-cat="estrutura"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 10l9-6 9 6v10H3z"/><path d="M9 21V11h6v10"/><path d="M12 4v6"/></svg></div><strong>Capela</strong><span>chapel</span></div>
+    <div class="icon-cell" data-name="porta madeira" data-cat="estrutura"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="3" width="12" height="18" rx="1"/><path d="M12 3v18"/><circle cx="9.5" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div><strong>Porta</strong><span>door</span></div>
+    <div class="icon-cell" data-name="banco madeira" data-cat="estrutura"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 14h16"/><path d="M6 14V10h12v4"/><path d="M4 18h16"/><path d="M7 18v2M17 18v2"/></svg></div><strong>Banco</strong><span>bench</span></div>
+    <div class="icon-cell" data-name="folha vegetação" data-cat="estrutura"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3C8 7 4 9 4 14a8 8 0 0 0 16 0c0-5-4-7-8-11z"/><path d="M12 3v18"/></svg></div><strong>Folha</strong><span>leaf</span></div>
+    <div class="icon-cell" data-name="árvore" data-cat="estrutura"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 7H5z"/><path d="M12 8l5 5H7z"/><path d="M10 16h4v5h-4z"/></svg></div><strong>Árvore</strong><span>tree</span></div>
+    <div class="icon-cell" data-name="mapa localização pin" data-cat="navegacao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div><strong>Localização</strong><span>map-pin</span></div>
+    <div class="icon-cell" data-name="calendário" data-cat="navegacao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg></div><strong>Calendário</strong><span>calendar</span></div>
+    <div class="icon-cell" data-name="relógio horário" data-cat="navegacao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></div><strong>Horário</strong><span>clock</span></div>
+    <div class="icon-cell" data-name="coração acolhimento" data-cat="acao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 19l-1.4-1.3C6 13.5 3 11 3 8a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 19 8c0 3-3 5.5-7.6 9.7z"/></svg></div><strong>Coração</strong><span>heart</span></div>
+    <div class="icon-cell" data-name="mensagem contato" data-cat="acao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H8l-4 3v-14a1 1 0 0 1 1-1z"/></svg></div><strong>Mensagem</strong><span>message</span></div>
+    <div class="icon-cell" data-name="telefone" data-cat="acao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 3.1 5.2 2 2 0 0 1 5 3h3a2 2 0 0 1 2 1.7l.4 2.6a2 2 0 0 1-.6 1.7l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 1.7-.6l2.6.4A2 2 0 0 1 22 16.9z"/></svg></div><strong>Telefone</strong><span>phone</span></div>
+    <div class="icon-cell" data-name="seta direita" data-cat="navegacao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></div><strong>Seta</strong><span>arrow-right</span></div>
+    <div class="icon-cell" data-name="chevron baixo" data-cat="navegacao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9l6 6 6-6"/></svg></div><strong>Chevron</strong><span>chevron-down</span></div>
+    <div class="icon-cell" data-name="busca" data-cat="acao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="6"/><path d="M20 20l-3.5-3.5"/></svg></div><strong>Busca</strong><span>search</span></div>
+    <div class="icon-cell" data-name="menu hamburguer" data-cat="navegacao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg></div><strong>Menu</strong><span>menu</span></div>
+    <div class="icon-cell" data-name="fechar x" data-cat="acao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6L6 18M6 6l12 12"/></svg></div><strong>Fechar</strong><span>x</span></div>
+    <div class="icon-cell" data-name="check confirmar" data-cat="acao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 13l4 4L19 7"/></svg></div><strong>Check</strong><span>check</span></div>
+    <div class="icon-cell" data-name="play vídeo" data-cat="acao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M10 8l6 4-6 4z" fill="currentColor" stroke="none"/></svg></div><strong>Play</strong><span>play</span></div>
+    <div class="icon-cell" data-name="compartilhar" data-cat="acao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></div><strong>Compartilhar</strong><span>share</span></div>
+    <div class="icon-cell" data-name="download" data-cat="acao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M3 19h18"/></svg></div><strong>Download</strong><span>download</span></div>
+    <div class="icon-cell" data-name="externo link" data-cat="navegacao"><div class="icon-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6"/><path d="M10 14L20 4"/><path d="M20 14v6H4V4h6"/></svg></div><strong>Externo</strong><span>external</span></div>
+  </div>
+
+  <div style="margin-top:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px">
+    <span style="font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)">Especificação</span>
+    <span style="font-size:13px">24×24 grade · 1.6px traço · 1.8px para setas · raio 1.5px · <strong>viewBox 0 0 24 24</strong></span>
+    <span style="margin-left:auto; font-family:var(--font-mono); font-size:11px; color:var(--muted)">SVG inline · currentColor · copie e use</span>
+    <button class="btn btn-ghost btn-sm" onclick="copyText('<svg width=24 height=24 viewBox=0 0 24 24 fill=none stroke=currentColor stroke-width=1.6>...</svg>')">Copiar template SVG</button>
+  </div>
+</section>
+
+<!-- BOTOES -->
+<section id="botoes" data-od-id="botoes">
+  <div class="section-head">
+    <div>
+      <div class="kicker">04 — Botões</div>
+      <h2>Sistema de botões</h2>
+      <p>Um primário quente, um secundário pedra e um fantasma. Todos com estados hover/active/disabled/focus bem definidos. O primário nunca repete na mesma viewport.</p>
+    </div>
+  </div>
+
+  <div class="btn-showcase">
+    <div class="showcase-col" data-od-id="btn-primary-show">
+      <h4><i></i> Primário — Luz</h4>
+      <div class="label">Tamanhos</div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-sm">Pequeno</button>
+        <button class="btn btn-primary">Padrão</button>
+        <button class="btn btn-primary btn-lg">Grande</button>
+      </div>
+      <div class="label">Variações</div>
+      <div class="btn-row">
+        <button class="btn btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg> Com ícone</button>
+        <button class="btn btn-primary btn-icon" aria-label="Ação primária"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></button>
+        <button class="btn btn-primary" disabled>Desativado</button>
+      </div>
+      <div class="state-grid">
+        <div class="state-cell"><button class="btn btn-primary btn-sm">Default</button><br>default</div>
+        <div class="state-cell"><button class="btn btn-primary btn-sm" style="background:var(--accent-strong)">Hover</button><br>hover L-0.07</div>
+        <div class="state-cell"><button class="btn btn-primary btn-sm" style="transform:scale(.98); background:oklch(55% 0.12 55)">Active</button><br>active</div>
+        <div class="state-cell"><button class="btn btn-primary btn-sm" style="outline:2px solid var(--accent); outline-offset:2px">Focus</button><br>focus ring</div>
+      </div>
+      <div class="specs">Fundo var(--accent) #D98E2E · texto branco 16.2:1 · sombra 0 4px 16px oklch/30% · raio 999px · padding 12×18. Hover escurece 7%, nunca clareia.</div>
+    </div>
+
+    <div class="showcase-col" data-od-id="btn-secondary-show">
+      <h4><i style="background:var(--night)"></i> Secundário & Fantasma</h4>
+      <div class="label">Secundário — pedra</div>
+      <div class="btn-row">
+        <button class="btn btn-secondary">Secundário</button>
+        <button class="btn btn-secondary btn-sm">Pequeno</button>
+        <button class="btn btn-secondary" disabled>Desativado</button>
+      </div>
+      <div class="label">Fantasma — borda</div>
+      <div class="btn-row">
+        <button class="btn btn-ghost">Fantasma</button>
+        <button class="btn btn-ghost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M3 19h18"/></svg> Download</button>
+        <button class="btn btn-ghost btn-icon" aria-label="Mais"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg></button>
+      </div>
+      <div class="label">Escuro — sobre noite</div>
+      <div class="btn-row" style="background:var(--night); padding:12px; border-radius:12px">
+        <button class="btn" style="background:white; color:var(--night)">Claro</button>
+        <button class="btn btn-dark">Escuro</button>
+        <button class="btn" style="background:transparent; color:white; border-color:color-mix(in oklch, white 20%, transparent)">Ghost noite</button>
+      </div>
+      <div class="specs">Secundário: fundo white, borda var(--border), hover var(--stone). Ghost: transparente → white no hover. Sobre noite: inverter. Todos com focus ring âmbar.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px; background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:22px; display:grid; grid-template-columns:1fr 1fr; gap:18px">
+    <div>
+      <h4 style="margin:0; font-size:14px">Regra de economia de ação</h4>
+      <p style="font-size:13px; color:var(--muted); line-height:1.6; margin:6px 0 0">Uma ação, um CTA primário por viewport. Se a landing tem “Agendar visita” no hero, o segundo “Agendar” só no rodapé. Todo o resto é secundário ou link.</p>
+      <div style="display:flex; gap:8px; margin-top:12px">
+        <span class="tag accent"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg> Correto: 1 primário visível</span>
+        <span class="tag" style="background:color-mix(in oklch, var(--danger) 10%, var(--surface)); border-color:color-mix(in oklch, var(--danger) 20%, transparent); color:var(--danger)">Evitar: 2 primários lado a lado</span>
+      </div>
+    </div>
+    <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px">
+      <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)">Código — botão primário</div>
+      <pre style="margin:8px 0 0; font-family:var(--font-mono); font-size:12px; line-height:1.6; white-space:pre-wrap; color:var(--fg)">&lt;button class="btn btn-primary"&gt;
+  Agendar visita
+  &lt;svg … /&gt;
+&lt;/button&gt;</pre>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="copyText('<button class=&quot;btn btn-primary&quot;>Agendar visita</button>')">Copiar HTML</button>
+    </div>
+  </div>
+</section>
+
+<!-- COMPONENTES -->
+<section id="componentes" data-od-id="componentes">
+  <div class="section-head">
+    <div>
+      <div class="kicker">05 — Componentes</div>
+      <h2>Peças de interface</h2>
+      <p>Cards, tags, inputs e alertas que completam o kit. Todos com bordas hairline, raios generosos e sombras suaves — ecoando a estrutura leve da capela.</p>
+    </div>
+  </div>
+
+  <div class="comp-grid">
+    <div class="comp-card" data-od-id="comp-tags">
+      <h4>Tags & Badges</h4>
+      <div style="display:flex; flex-wrap:wrap; gap:8px">
+        <span class="tag accent">Missa diária</span>
+        <span class="tag night">Noturno</span>
+        <span class="tag">Aberto hoje</span>
+        <span class="tag" style="font-family:var(--font-mono)">19:00 · Celebração</span>
+      </div>
+      <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap">
+        <span class="tag" style="background:var(--accent-soft); border-color:color-mix(in oklch, var(--accent) 18%, transparent); color:var(--accent-strong)">● Ao vivo</span>
+        <span class="tag" style="background:var(--night); color:var(--accent-soft); border-color:transparent">★ Destaque</span>
+      </div>
+    </div>
+
+    <div class="comp-card" data-od-id="comp-inputs">
+      <h4>Inputs</h4>
+      <div style="display:flex; flex-direction:column; gap:10px">
+        <label style="font-size:12px; font-weight:600">Nome <span style="font-weight:400; color:var(--muted)">— para intenções</span></label>
+        <input class="input" placeholder="Seu nome completo">
+        <input class="input" value="maria@email.com" style="border-color:var(--accent)">
+        <div style="position:relative"><input class="input error" value="email inválido"><span style="position:absolute; right:10px; top:50%; transform:translateY(-50%)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v6M12 16h.01"/></svg></span></div>
+        <span style="font-size:11px; color:var(--danger); font-family:var(--font-mono)">Verifique o e-mail digitado</span>
+      </div>
+    </div>
+
+    <div class="comp-card" data-od-id="comp-alerts">
+      <h4>Alertas</h4>
+      <div style="display:flex; flex-direction:column; gap:10px">
+        <div class="alert success"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 13l4 4L19 7"/></svg><div><strong>Visita confirmada</strong><br>Dia 14 · 19h. Chegue 10 min antes.</div></div>
+        <div class="alert info"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg><div><strong>Capela aberta</strong><br>Seg–sex 18h–21h · Sáb 8h–12h</div></div>
+      </div>
+    </div>
+
+    <div class="mock-card" data-od-id="mock-card-1">
+      <img src="backgroud-capela.png" alt="Capela iluminada à noite" style="filter:brightness(1.02)">
+      <div class="mock-body">
+        <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent-strong)">Evento · Céu aberto</div>
+        <h5>Vigília sob as estrelas</h5>
+        <p>Uma noite de oração com a Via Láctea como teto. Traga sua vela.</p>
+        <div style="display:flex; gap:8px; margin-top:12px"><button class="btn btn-primary btn-sm">Confirmar presença</button><button class="btn btn-ghost btn-sm">Detalhes</button></div>
+      </div>
+    </div>
+
+    <div class="mock-card" data-od-id="mock-card-2">
+      <div style="height:160px; background:var(--night); display:grid; place-items:center; color:var(--accent-soft); position:relative; overflow:hidden">
+        <div style="position:absolute; inset:0; opacity:.35; background:radial-gradient(600px 300px at 50% 20%, oklch(69% 0.135 58 / 40%), transparent 60%), radial-gradient(400px 200px at 80% 90%, oklch(22% 0.05 265 / 80%), transparent)"></div>
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" style="position:relative"><path d="M12 2l1.8 5.2H19l-4.3 3.1 1.6 5.2L12 12.3l-4.3 3.2 1.6-5.2L5 7.2h5.2z"/><circle cx="12" cy="12" r="9" opacity=".3"/></svg>
+      </div>
+      <div class="mock-body">
+        <h5>Horários de celebração</h5>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px">
+          <div style="display:flex; justify-content:space-between; font-size:13px; padding:8px 10px; background:var(--bg); border-radius:10px; border:1px solid var(--border)"><span>Segunda a sexta</span><strong>19:00</strong></div>
+          <div style="display:flex; justify-content:space-between; font-size:13px; padding:8px 10px; background:var(--bg); border-radius:10px; border:1px solid var(--border)"><span>Sábado</span><strong>18:00</strong></div>
+          <div style="display:flex; justify-content:space-between; font-size:13px; padding:8px 10px; background:var(--accent-soft); border-radius:10px; border:1px solid color-mix(in oklch, var(--accent) 18%, transparent)"><span>Domingo</span><strong>10:00 & 19:00</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="comp-card" style="display:flex; flex-direction:column; justify-content:space-between" data-od-id="comp-nav">
+      <div>
+        <h4>Navegação</h4>
+        <div style="display:flex; gap:6px; background:var(--bg); padding:6px; border-radius:999px; border:1px solid var(--border); width:fit-content">
+          <button class="btn btn-primary btn-sm" style="padding:8px 14px">Início</button>
+          <button class="btn btn-ghost btn-sm" style="border-color:transparent; background:transparent">História</button>
+          <button class="btn btn-ghost btn-sm" style="border-color:transparent; background:transparent">Visitas</button>
+        </div>
+        <div style="margin-top:14px; display:flex; gap:6px">
+          <span style="flex:1; height:6px; border-radius:999px; background:var(--accent)"></span>
+          <span style="flex:1; height:6px; border-radius:999px; background:var(--border)"></span>
+          <span style="flex:1; height:6px; border-radius:999px; background:var(--border)"></span>
+        </div>
+      </div>
+      <p style="font-size:12px; color:var(--muted); margin-top:14px">Tabs com indicador âmbar. Fundo pedra, borda hairline, raio 999px.</p>
+    </div>
+  </div>
+
+  <!-- Demo aplicação -->
+  <div class="demo-wrap" style="margin-top:24px" data-od-id="demo-app">
+    <div class="demo-head">
+      <div style="display:flex; align-items:center; gap:12px">
+        <div style="width:32px; height:32px; border-radius:8px; background:var(--accent); display:grid; place-items:center; color:white"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 10l9-6 9 6v10H3z"/></svg></div>
+        <div><strong style="font-size:13px">Capela São José</strong><br><span style="font-size:11px; opacity:.6; font-family:var(--font-mono)">EXEMPLO DE APLICAÇÃO</span></div>
+      </div>
+      <button class="btn" style="background:var(--accent); color:white; border-color:transparent; padding:10px 16px; font-size:13px">Agendar visita</button>
+    </div>
+    <div class="demo-grid">
+      <div class="demo-left">
+        <div style="font-family:var(--font-display); font-size:26px; line-height:1">Um lugar de <span style="color:var(--accent-soft)">pausa</span> na cidade</div>
+        <p style="opacity:.7; font-size:13px; line-height:1.6; margin:10px 0 16px">Arquitetura aberta, luz quente e silêncio. A capela recebe visitantes todos os dias, com celebrações ao entardecer.</p>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px">
+          <div><div class="stat"><strong>320</strong>lugares</div></div>
+          <div><div class="stat"><strong>19h</strong>média luz acesa</div></div>
+          <div><div class="stat"><strong>6</strong>dias / semana</div></div>
+        </div>
+      </div>
+      <div class="demo-right">
+        <div style="font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; opacity:.6">Próxima celebração</div>
+        <div style="font-family:var(--font-display); font-size:20px; margin-top:4px">Quarta · 19:00</div>
+        <p style="font-size:12px; opacity:.7; margin:4px 0 14px">Vigília com música ao vivo. Entrada livre.</p>
+        <div style="display:flex; gap:8px">
+          <button class="btn btn-primary btn-sm" style="flex:1">Confirmar</button>
+          <button class="btn btn-ghost btn-sm" style="background:color-mix(in oklch, white 10%, transparent); color:white; border-color:color-mix(in oklch, white 14%, transparent)">Como chegar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="max-width:1180px; margin:0 auto; padding:28px 32px 48px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; font-size:13px; color:var(--muted)" data-od-id="footer">
+  <div><strong style="color:var(--fg)">Capela · Sistema de Design v1.0</strong><br>Paleta extraída de backgroud-capela.png · OKLCH · WCAG AA</div>
+  <div style="display:flex; gap:8px; align-items:center">
+    <button class="btn btn-ghost btn-sm" onclick="copyTokens()">Copiar tokens :root</button>
+    <button class="btn btn-primary btn-sm" onclick="downloadCSS()">Baixar capela-tokens.css</button>
+  </div>
+</footer>
+
+<div class="toast" id="toast"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg><span id="toastMsg">Copiado!</span></div>
+
+<script>
+const tokensCSS = `:root{
+  --bg: oklch(97.5% 0.015 75);
+  --surface: oklch(100% 0 0);
+  --fg: oklch(18% 0.035 265);
+  --muted: oklch(56% 0.018 75);
+  --border: oklch(89% 0.02 75);
+  --accent: oklch(69% 0.135 58);
+  --accent-strong: oklch(62% 0.13 55);
+  --accent-soft: oklch(91% 0.05 75);
+  --night: oklch(22% 0.05 265);
+  --night-2: oklch(14% 0.03 270);
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}`;
+function copyText(t){
+  navigator.clipboard.writeText(t).then(()=> showToast('Copiado: '+t.slice(0,28)));
+}
+function copyTokens(){
+  navigator.clipboard.writeText(tokensCSS).then(()=> showToast('Tokens :root copiados'));
+}
+function downloadCSS(){
+  const blob = new Blob([tokensCSS + "\n\n/* + classes .btn, .btn-primary etc incluídas no sistema */"], {type:'text/css'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='capela-tokens.css'; a.click(); showToast('capela-tokens.css baixado');
+}
+function showToast(msg){
+  const t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200);
+}
+function filterIcons(q){
+  const v=q.toLowerCase();
+  document.querySelectorAll('#iconGrid .icon-cell').forEach(c=>{
+    c.style.display = c.dataset.name.includes(v) ? '' : 'none';
+  });
+}
+function filterCat(cat){
+  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.toggle('active', b.dataset.filter===cat));
+  document.querySelectorAll('#iconGrid .icon-cell').forEach(c=>{
+    c.style.display = (cat==='todos' || c.dataset.cat===cat) ? '' : 'none';
+  });
+}
+function setIconStyle(s){
+  showToast(s==='solid' ? 'Estilo sólido ativo' : 'Estilo contorno ativo');
+}
+function togglePreview(){
+  document.body.style.filter = document.body.style.filter ? '' : 'brightness(0.98)';
+  showToast('Preview alternado');
+}
+document.querySelectorAll('.nav-links a').forEach(a=>{
+  a.addEventListener('click', e=>{
+    document.querySelectorAll('.nav-links a').forEach(x=>x.classList.remove('active'));
+    e.target.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

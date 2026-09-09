@@ -21,57 +21,85 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 md:p-6">
-      {/* fundo */}
-      <div className="absolute inset-0">
+    <div className="min-h-screen relative flex items-center justify-center p-4 md:p-6" style={{ background: 'var(--night-2)' }}>
+      {/* fundo capela - hero spec */}
+      <div className="absolute inset-0 overflow-hidden">
         <img
           src="/backgroud-capela.png"
-          alt=""
-          aria-hidden="true"
+          alt="Capela de madeira iluminada sob céu estrelado"
           className="h-full w-full object-cover"
+          style={{ objectPosition: 'center 35%', opacity: 0.92 }}
         />
-        <div className="absolute inset-0 bg-stone-900/35" />
-        <div className="absolute inset-0 backdrop-blur-[2px]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(180deg, oklch(14% 0.03 270 / 35%) 0%, oklch(14% 0.03 270 / 10%) 35%, oklch(97.5% 0.015 75 / 88%) 88%, var(--bg) 100%)',
+          }}
+        />
+        {/* blur leve geral */}
+        <div className="absolute inset-0 backdrop-blur-[1.5px]" style={{ opacity: 0.5 }} />
       </div>
 
-      {/* painel login */}
+      {/* painel login - glass spec  */}
       <div className="relative w-full max-w-md">
-        <div className="bg-white rounded-[24px] border border-white/20 p-7 md:p-8 shadow-2xl">
-          <h1 className="font-display font-black text-2xl text-stone-900">Entrar</h1>
-          <p className="text-sm text-stone-500 mt-1">Acesse sua conta</p>
+        <div
+          className="p-7 md:p-8 shadow-2xl"
+          style={{
+            background: 'color-mix(in oklch, var(--surface) 92%, transparent)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid color-mix(in oklch, white 45%, transparent)',
+            borderRadius: '20px',
+            boxShadow: '0 16px 40px oklch(14% 0.03 270 / 18%)',
+          }}
+        >
+          <div className="flex items-center gap-3 mb-1">
+            <div
+              className="w-9 h-9 rounded-[10px] grid place-items-center"
+              style={{ background: 'var(--night)', color: 'var(--accent-soft)', border: '1px solid color-mix(in oklch, var(--accent) 30%, transparent)' }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="w-[18px] h-[18px]">
+                <path d="M12 3v18M8 9h8" />
+                <circle cx="12" cy="7" r="1.2" fill="currentColor" stroke="none" />
+              </svg>
+            </div>
+            <span className="font-display text-lg" style={{ color: 'var(--fg)' }}>Rifa Borromeu</span>
+            <span className="text-[11px] tracking-widest font-semibold uppercase px-2 py-0.5 rounded-full" style={{ background: 'var(--night)', color: 'var(--accent-soft)' }}>2026</span>
+          </div>
+
+          <h1 className="font-display text-2xl mt-4" style={{ color: 'var(--fg)' }}>Entrar</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>Acesse sua conta</p>
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
             <label className="block">
-              <span className="text-sm font-semibold text-stone-700">Email</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>Email</span>
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
                 autoComplete="username"
-                className="mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-borromeu-700/20 focus:border-borromeu-700"
+                className="mt-1.5 w-full px-3.5 py-2.5 text-sm placeholder:text-stone-400 focus:outline-none"
+                style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
               />
             </label>
             <label className="block">
-              <span className="text-sm font-semibold text-stone-700">Senha</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>Senha</span>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                className="mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-borromeu-700/20 focus:border-borromeu-700"
+                className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none"
+                style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
               />
             </label>
-            {err && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">{err}</p>}
-            <button
-              disabled={loading}
-              className="w-full rounded-xl bg-borromeu-700 text-white py-3 text-sm font-bold hover:bg-borromeu-800 disabled:opacity-50 shadow-sm transition"
-            >
+            {err && <p className="text-sm px-3 py-2.5" style={{ color: 'var(--danger)', background: 'color-mix(in oklch, var(--danger) 8%, var(--surface))', border: '1px solid color-mix(in oklch, var(--danger) 18%, transparent)', borderRadius: 'var(--radius-sm)' }}>{err}</p>}
+            <button disabled={loading} className="btn btn-primary w-full disabled:opacity-50">
               {loading ? 'Entrando...' : 'Entrar →'}
             </button>
-            <p className="text-center text-xs text-stone-500">Esqueceu? Fale com o admin.</p>
+            <p className="text-center text-xs" style={{ color: 'var(--muted)' }}>Esqueceu? Fale com o admin.</p>
           </form>
         </div>
+        <p className="text-center text-xs mt-4" style={{ color: 'color-mix(in oklch, var(--muted) 80%, transparent)' }}>Capela Noturna · luz noturna · madeira & céu</p>
       </div>
     </div>
   )
