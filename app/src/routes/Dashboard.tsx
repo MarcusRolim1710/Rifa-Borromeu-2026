@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../store/auth'
 import { exportVendasPdf } from '../lib/pdf'
+import { isSupabaseConfigured } from '../lib/supabase'
+import { useEdition, useSales } from '../lib/queries'
 
-type Sale = { id: string; number: number; buyer: string; cell: string; seller: string; status: 'pago' | 'pendente'; sellerId: string }
-const MOCK_SALES: Sale[] = [
+type SaleMock = { id: string; number: number; buyer: string; cell: string; seller: string; status: 'pago' | 'pendente'; sellerId: string }
+const MOCK_SALES: SaleMock[] = [
   { id: '1', number: 12, buyer: 'Maria Silva', cell: '(85) 99999-0001', seller: 'João', sellerId: 'mock-seller', status: 'pago' },
   { id: '2', number: 15, buyer: 'Pedro Santos', cell: '(85) 99999-0002', seller: 'João', sellerId: 'mock-seller', status: 'pendente' },
   { id: '3', number: 201, buyer: 'Ana Lima', cell: '(85) 99999-0003', seller: 'Ana V', sellerId: 'other', status: 'pago' },
@@ -15,23 +17,48 @@ export default function Dashboard() {
   const isAdmin = profile?.role === 'admin'
   const [filterSeller, setFilterSeller] = useState<string>('all')
 
+  const { data: edition } = useEdition()
+  const price = edition?.price_per_point ?? 10
+  const { data: salesReal, isLoading } = useSales()
+
+  // map real sales to display shape when supabase configured
   const sales = useMemo(() => {
-    if (!isAdmin) return MOCK_SALES.filter((s) => s.sellerId === profile?.id || s.sellerId === 'mock-seller')
-    if (filterSeller !== 'all') return MOCK_SALES.filter((s) => s.seller === filterSeller)
-    return MOCK_SALES
-  }, [isAdmin, filterSeller, profile?.id])
+    if (!isSupabaseConfigured || !salesReal) {
+      // fallback mock com filtro seller
+      let filtered = MOCK_SALES
+      if (!isAdmin) filtered = MOCK_SALES.filter((s) => s.sellerId === profile?.id || s.sellerId === 'mock-seller')
+      else if (filterSeller !== 'all') filtered = MOCK_SALES.filter((s) => s.seller === filterSeller)
+      return filtered.map((s) => ({ id: s.id, number: s.number, buyer: s.buyer, cell: s.cell, seller: s.seller, status: s.status, sellerId: s.sellerId }))
+    }
+    const mapped = salesReal.map((r) => ({
+      id: r.id,
+      number: r.number_int,
+      buyer: r.buyer_name,
+      cell: r.buyer_cell,
+      seller: r.seller_name ?? r.seller_id.slice(0, 8),
+      status: r.payment_status as 'pago' | 'pendente',
+      sellerId: r.seller_id,
+      sold_at: r.sold_at,
+    }))
+    let filtered = mapped
+    if (!isAdmin) filtered = mapped.filter((s) => s.sellerId === profile?.id)
+    else if (filterSeller !== 'all') filtered = mapped.filter((s) => s.seller === filterSeller)
+    return filtered
+  }, [isAdmin, filterSeller, profile?.id, salesReal])
 
   const total = sales.length
   const pagos = sales.filter((s) => s.status === 'pago').length
   const pendentes = total - pagos
-  const valorRecebido = pagos * 10
-  const valorAReceber = pendentes * 10
+  const valorRecebido = pagos * price
+  const valorAReceber = pendentes * price
 
   const ranking = useMemo(() => {
     const map = new Map<string, number>()
     sales.forEach((s) => map.set(s.seller, (map.get(s.seller) ?? 0) + 1))
     return [...map.entries()].sort((a, b) => b[1] - a[1])
   }, [sales])
+
+  const allSellers = useMemo(() => [...new Set((salesReal ?? []).map((r) => r.seller_name ?? r.seller_id.slice(0, 8)))], [salesReal])
 
   function handlePdf() {
     exportVendasPdf(
@@ -43,19 +70,18 @@ export default function Dashboard() {
         status: s.status,
         vendidoEm: new Date().toLocaleDateString('pt-BR'),
       })),
-      { edition: 'Edição 2026', userEmail: profile?.name ?? 'admin' },
+      { edition: edition?.name ?? 'Edição 2026', userEmail: profile?.name ?? 'admin' },
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* hero */}
       <div className="rounded-[24px] bg-borromeu-800 text-white p-6 md:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm overflow-hidden relative">
         <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
         <div className="relative">
           <p className="text-xs tracking-[0.18em] font-bold text-white/60 uppercase">Visão geral</p>
           <h1 className="font-display font-black text-[28px] md:text-[34px] leading-none mt-1">Dashboard</h1>
-          <p className="text-sm text-white/70 mt-1">{isAdmin ? 'Todos os vendedores' : 'Seus números e vendas'}</p>
+          <p className="text-sm text-white/70 mt-1">{isAdmin ? 'Todos os vendedores' : 'Seus números e vendas'} {edition ? `· ${edition.name}` : ''}</p>
         </div>
         <button onClick={handlePdf} className="relative inline-flex items-center gap-2 rounded-full bg-white text-borromeu-800 px-5 py-2.5 text-sm font-bold hover:bg-stone-50 transition shadow-sm">
           ⤓ Exportar PDF
@@ -63,13 +89,20 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* KPIs — distinctive: big serif numbers, varied treatment */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <Kpi label="Total vendido" value={String(total)} sub="pontos" />
-        <Kpi label="Valor recebido" value={`R$ ${valorRecebido.toFixed(2)}`} sub={`${pagos} pagos`} accent />
-        <Kpi label="A receber" value={`R$ ${valorAReceber.toFixed(2)}`} sub={`${pendentes} pendentes`} muted />
-        <Kpi label="Cartelas" value="3" sub="alocadas" />
-      </div>
+      {isSupabaseConfigured && isLoading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-28 rounded-[20px] bg-white border border-stone-200 animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <Kpi label="Total vendido" value={String(total)} sub="pontos" />
+          <Kpi label="Valor recebido" value={`R$ ${valorRecebido.toFixed(2)}`} sub={`${pagos} pagos`} accent />
+          <Kpi label="A receber" value={`R$ ${valorAReceber.toFixed(2)}`} sub={`${pendentes} pendentes`} muted />
+          <Kpi label="Cartelas" value={String(allSellers.length ? '—' : '0')} sub={isSupabaseConfigured ? 'alocadas' : 'alocadas'} />
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-4">
         <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm">
@@ -100,8 +133,9 @@ export default function Dashboard() {
               <span className="text-sm font-semibold text-stone-700">Vendedor</span>
               <select value={filterSeller} onChange={(e) => setFilterSeller(e.target.value)} className="mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm focus:border-borromeu-700 focus:ring-2 focus:ring-borromeu-700/20 focus:outline-none">
                 <option value="all">Todos</option>
-                <option value="João">João</option>
-                <option value="Ana V">Ana V</option>
+                {allSellers.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
               </select>
             </label>
           ) : (
@@ -114,6 +148,7 @@ export default function Dashboard() {
             <p className="text-xs tracking-widest font-bold text-white/60 uppercase">Regra Borromeu</p>
             <p className="text-sm leading-snug mt-1">Cartelas em ranges sequenciais. Sem sobreposição. Devolução só se sem vendas.</p>
           </div>
+          {!isSupabaseConfigured && <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-4">Modo mock — configure Supabase para dados reais.</p>}
         </div>
       </div>
     </div>

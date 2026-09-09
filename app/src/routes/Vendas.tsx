@@ -1,34 +1,78 @@
 import { useState } from 'react'
 import { useAuth } from '../store/auth'
+import { isSupabaseConfigured } from '../lib/supabase'
+import { useCartelas, useCreateSale, useEdition, useSales } from '../lib/queries'
 
-type Sale = { id: string; number: number; buyer: string; cell: string; status: 'pago' | 'pendente'; sellerId: string; seller: string }
-const INITIAL: Sale[] = [
+type SaleMock = { id: string; number: number; buyer: string; cell: string; status: 'pago' | 'pendente'; sellerId: string; seller: string }
+const INITIAL_MOCK: SaleMock[] = [
   { id: '1', number: 12, buyer: 'Maria Silva', cell: '(85) 99999-0001', status: 'pago', sellerId: 'mock-seller', seller: 'João' },
 ]
 
 export default function Vendas() {
   const { profile } = useAuth()
   const isAdmin = profile?.role === 'admin'
-  const [sales, setSales] = useState<Sale[]>(INITIAL)
+  const { data: edition } = useEdition()
+  const { data: cartelas } = useCartelas()
+  const { data: salesReal, isLoading } = useSales()
+  const create = useCreateSale()
+
   const [number, setNumber] = useState('')
   const [buyer, setBuyer] = useState('')
   const [cell, setCell] = useState('')
   const [status, setStatus] = useState<'pago' | 'pendente'>('pendente')
   const [err, setErr] = useState<string | null>(null)
 
-  const visible = isAdmin ? sales : sales.filter((s) => s.sellerId === profile?.id || s.sellerId === 'mock-seller')
+  const useReal = isSupabaseConfigured && salesReal
+  const visible = useReal
+    ? salesReal
+        .filter((s) => isAdmin || s.seller_id === profile?.id)
+        .map((s) => ({
+          id: s.id,
+          number: s.number_int,
+          buyer: s.buyer_name,
+          cell: s.buyer_cell,
+          status: s.payment_status as 'pago' | 'pendente',
+          seller: s.seller_name ?? s.seller_id.slice(0, 8),
+        }))
+    : INITIAL_MOCK.filter((s) => isAdmin || s.sellerId === profile?.id || s.sellerId === 'mock-seller')
 
-  function add() {
+  async function add() {
     setErr(null)
     if (buyer.trim().split(/\s+/).length < 2) return setErr('Informe nome e sobrenome')
     if (!cell.trim()) return setErr('Cell obrigatório')
     const n = Number(number)
     if (!Number.isFinite(n)) return setErr('Número inválido')
-    if (sales.some((s) => s.number === n)) return setErr(`Número ${n} já vendido`)
-    const inCartela = n >= 10 && n <= 29
-    if (!inCartela && !isAdmin) return setErr('Número não pertence à sua cartela (mock 10-29)')
-    setSales((prev) => [...prev, { id: String(Date.now()), number: n, buyer: buyer.trim(), cell: cell.trim(), status, sellerId: profile?.id ?? 'mock-seller', seller: profile?.name ?? 'Vendedor' }])
-    setNumber(''); setBuyer(''); setCell('')
+    if (!edition) return setErr('Edição não encontrada')
+
+    if (useReal) {
+      // encontra cartela do vendedor que contém o número
+      const cartela = cartelas?.find((c) => n >= c.start_int && n <= c.end_int && (isAdmin || c.seller_id === profile?.id))
+      if (!cartela) return setErr('Número não pertence a nenhuma cartela sua')
+      if (salesReal?.some((s) => s.number_int === n && s.edition_id === edition.id)) return setErr(`Número ${n} já vendido`)
+
+      try {
+        await create.mutateAsync({
+          edition_id: edition.id,
+          cartela_id: cartela.id,
+          seller_id: isAdmin ? cartela.seller_id : (profile?.id as string),
+          number_int: n,
+          buyer_name: buyer.trim(),
+          buyer_cell: cell.trim(),
+          payment_status: status,
+        })
+        setNumber(''); setBuyer(''); setCell('')
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e)
+        if (msg.includes('already exists') || msg.includes('unique') || msg.includes('duplicate')) setErr(`Número ${n} já vendido`)
+        else if (msg.includes('nao pertence')) setErr(msg)
+        else if (msg.includes('buyer_name')) setErr('Informe nome e sobrenome')
+        else setErr(msg)
+      }
+    } else {
+      // mock
+      if (INITIAL_MOCK.some((s) => s.number === n)) return setErr(`Número ${n} já vendido`)
+      setErr('Modo mock — configure Supabase para persistir')
+    }
   }
 
   return (
@@ -36,7 +80,7 @@ export default function Vendas() {
       <div className="flex items-baseline justify-between gap-4">
         <div>
           <h1 className="font-display font-black text-2xl text-stone-900">{isAdmin ? 'Todas vendas' : 'Minhas vendas'}</h1>
-          <p className="text-sm text-stone-500">Nome e sobrenome + cell obrigatórios</p>
+          <p className="text-sm text-stone-500">Nome e sobrenome + cell obrigatórios {edition ? `· ${edition.name}` : ''}</p>
         </div>
         <span className="hidden sm:inline-flex text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full bg-white border border-stone-200 text-stone-600">{visible.length} registros</span>
       </div>
@@ -47,6 +91,7 @@ export default function Vendas() {
           <label className="block">
             <span className="text-xs font-bold tracking-widest uppercase text-stone-500">Número *</span>
             <input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="12" className="mt-1.5 w-full rounded-xl border border-stone-300 px-3.5 py-2.5 text-sm focus:border-borromeu-700 focus:ring-2 focus:ring-borromeu-700/20 focus:outline-none" />
+            {cartelas && cartelas.length > 0 && <span className="text-xs text-stone-500">Suas cartelas: {cartelas.filter((c) => isAdmin || c.seller_id === profile?.id).map((c) => `${c.start_int}—${c.end_int}`).join(', ')}</span>}
           </label>
           <label className="block">
             <span className="text-xs font-bold tracking-widest uppercase text-stone-500">Status *</span>
@@ -65,39 +110,44 @@ export default function Vendas() {
           </label>
         </div>
         {err && <p className="mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">{err}</p>}
-        <button onClick={add} className="mt-4 inline-flex rounded-xl bg-borromeu-700 text-white px-5 py-2.5 text-sm font-bold hover:bg-borromeu-800 shadow-sm transition">
-          Registrar venda
+        {!isSupabaseConfigured && <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-3">Modo mock — configure Supabase</p>}
+        <button onClick={add} disabled={create.isPending} className="mt-4 inline-flex rounded-xl bg-borromeu-700 text-white px-5 py-2.5 text-sm font-bold hover:bg-borromeu-800 shadow-sm transition disabled:opacity-50">
+          {create.isPending ? 'Registrando...' : 'Registrar venda'}
         </button>
       </div>
 
       <div className="bg-white rounded-[20px] border border-stone-200 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-stone-50 text-stone-500 border-b border-stone-200">
-              <tr>
-                <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Número</th>
-                <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Comprador</th>
-                <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Cell</th>
-                <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Vendedor</th>
-                <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-100">
-              {visible.map((s) => (
-                <tr key={s.id} className="hover:bg-stone-50/60">
-                  <td className="px-4 py-3 font-mono font-bold text-stone-900">{s.number}</td>
-                  <td className="px-4 py-3 font-medium text-stone-800">{s.buyer}</td>
-                  <td className="px-4 py-3 text-stone-600">{s.cell}</td>
-                  <td className="px-4 py-3 text-stone-600">{s.seller}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold border ${s.status === 'pago' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>{s.status}</span>
-                  </td>
+        {isLoading ? (
+          <div className="p-8 text-center text-sm text-stone-500">Carregando...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-stone-50 text-stone-500 border-b border-stone-200">
+                <tr>
+                  <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Número</th>
+                  <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Comprador</th>
+                  <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Cell</th>
+                  <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Vendedor</th>
+                  <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Status</th>
                 </tr>
-              ))}
-              {visible.length === 0 && <tr><td colSpan={5} className="px-4 py-12 text-center text-stone-500">Nenhuma venda.</td></tr>}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-stone-100">
+                {visible.map((s) => (
+                  <tr key={s.id} className="hover:bg-stone-50/60">
+                    <td className="px-4 py-3 font-mono font-bold text-stone-900">{s.number}</td>
+                    <td className="px-4 py-3 font-medium text-stone-800">{s.buyer}</td>
+                    <td className="px-4 py-3 text-stone-600">{s.cell}</td>
+                    <td className="px-4 py-3 text-stone-600">{s.seller}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold border ${s.status === 'pago' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>{s.status}</span>
+                    </td>
+                  </tr>
+                ))}
+                {visible.length === 0 && <tr><td colSpan={5} className="px-4 py-12 text-center text-stone-500">Nenhuma venda.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )
