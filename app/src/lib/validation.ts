@@ -23,7 +23,7 @@ export const cartelaSchema = z.object({
 
 export const profileSchema = z.object({
   name: z.string().trim().min(3, 'Informe nome e sobrenome').refine((v) => v.split(/\s+/).length >= 2, 'Informe nome e sobrenome'),
-  phone: z.string().trim().min(1, 'Telefone obrigatório').regex(/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/, 'Telefone inválido (ex: (85) 99999-0000)'),
+  phone: z.string().trim().optional().or(z.literal('')).refine((v) => !v || /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/.test(v), 'Telefone inválido (ex: (85) 99999-0000)'),
 })
 
 export const vendedorSchema = z.object({

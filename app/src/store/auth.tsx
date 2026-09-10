@@ -97,9 +97,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function updateProfile(data: { name: string; phone: string }) {
     if (!supabase || !profile) return { error: 'Não autenticado' }
-    const { error } = await supabase.from('profiles').update({ name: data.name.trim(), phone: data.phone.trim() }).eq('id', profile.id)
+    // usa RPC que atualiza login (slugify) + audit log
+    const { data: rpcData, error } = await supabase.rpc('update_own_profile', { p_name: data.name.trim(), p_phone: data.phone.trim() } as never)
     if (error) return { error: error.message }
+    const newEmail = (rpcData as { email?: string } | null)?.email
     setProfile((p) => (p ? { ...p, name: data.name.trim(), phone: data.phone.trim() } : p))
+    if (newEmail) {
+      // refresh para refletir novo email no Perfil
+      await refreshProfile()
+      return { error: null, email: newEmail } as { error: string | null; email?: string }
+    }
     return { error: null }
   }
 

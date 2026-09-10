@@ -29,10 +29,16 @@ export default function Perfil() {
     const parsed = profileSchema.safeParse({ name, phone })
     if (!parsed.success) return setErr(parsed.error.issues[0].message)
     setSaving(true)
-    const { error } = await updateProfile({ name, phone })
+    const res = await updateProfile({ name, phone })
     setSaving(false)
-    if (error) setErr(error)
-    else setMsg('Perfil atualizado')
+    if (res.error) setErr(res.error)
+    else {
+      const newEmail = (res as { email?: string }).email
+      if (newEmail && newEmail !== email) {
+        setEmail(newEmail)
+        setMsg(`Perfil atualizado · login alterado para ${newEmail} (use no próximo acesso)`)
+      } else setMsg('Perfil atualizado')
+    }
   }
 
   async function handlePass() {
@@ -61,8 +67,9 @@ export default function Perfil() {
           <input value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
         </label>
         <label className="block">
-          <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Telefone *</span>
+          <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Telefone (opcional)</span>
           <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(85) 99999-0000" className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
+          <span className="text-xs" style={{ color: 'var(--muted)' }}>Se mudar o nome, seu login vira nome.sobrenome@borromeu.com</span>
         </label>
         <label className="block">
           <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Email (login)</span>
