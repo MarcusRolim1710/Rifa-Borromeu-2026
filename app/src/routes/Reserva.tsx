@@ -74,6 +74,7 @@ export default function Reserva() {
     if (selected.length === 0) return setErr('Selecione ao menos um número')
     if (selected.length > disponiveis) return setErr('Quantidade excede disponíveis')
     if (buyerName.trim().split(/\s+/).length < 2) return setErr('Informe nome e sobrenome')
+    if (buyerCell.trim() && buyerCell.replace(/\D/g, '').length < 8) return setErr('Celular inválido — informe 8+ dígitos ou deixe vazio')
     try {
       await createReq.mutateAsync({ token: t, numbers: selected, buyer_name: buyerName.trim(), buyer_cell: buyerCell.trim() })
       setMsg(`Solicitação enviada para ${selected.join(', ')} — aguarde o vendedor aprovar.`)

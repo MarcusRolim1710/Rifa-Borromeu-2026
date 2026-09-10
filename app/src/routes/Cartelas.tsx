@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
 import { useAuth } from '../store/auth'
 import { supabase } from '../lib/supabase'
+import { useQueryClient } from '@tanstack/react-query'
 const QRCodeSVG = lazy(() => import('qrcode.react').then((m) => ({ default: m.QRCodeSVG })))
 import {
   useCartelas,
@@ -41,6 +42,7 @@ export default function Cartelas() {
   const revokeQr = useRevokeQrToken()
   const approveReq = useApproveSaleRequest()
   const { data: reqsAll } = useSaleRequests()
+  const qc = useQueryClient()
   const [qrOpen, setQrOpen] = useState<string | null>(null)
   const [qrToken, setQrToken] = useState<string | null>(null)
   const [qrExpires, setQrExpires] = useState<string | null>(null)
@@ -61,9 +63,11 @@ export default function Cartelas() {
   // realtime solicitações
   useEffect(() => {
     if (!supabase || !profile) return
-    const ch = supabase.channel('sale_requests_cartelas').on('postgres_changes', { event: '*', schema: 'public', table: 'sale_requests' }, () => {}).subscribe()
+    const ch = supabase.channel('sale_requests_cartelas').on('postgres_changes', { event: '*', schema: 'public', table: 'sale_requests' }, () => {
+      qc.invalidateQueries({ queryKey: ['sale_requests'] })
+    }).subscribe()
     return () => { if (supabase) supabase.removeChannel(ch) }
-  }, [profile])
+  }, [profile, qc])
 
   async function handleQr(cartelaId: string) {
     setQrOpen(cartelaId); setQrToken(null); setQrExpires(null)
@@ -250,9 +254,9 @@ export default function Cartelas() {
                           <p className="text-xs" style={{ color: 'var(--muted)' }}>{r.buyer_cell || 'sem cell'} · {new Date(r.created_at).toLocaleString('pt-BR')}</p>
                         </div>
                         <div className="flex gap-1.5">
-                          <button onClick={() => approveReq.mutate({ id: r.id, action: 'pendente' })} disabled={approveReq.isPending} className="btn btn-secondary btn-sm">Aprovar pendente</button>
-                          <button onClick={() => approveReq.mutate({ id: r.id, action: 'pago' })} disabled={approveReq.isPending} className="btn btn-primary btn-sm">Aprovar pago</button>
-                          <button onClick={() => approveReq.mutate({ id: r.id, action: 'recusado' })} disabled={approveReq.isPending} className="btn btn-ghost btn-sm">Recusar</button>
+                          <button onClick={async () => { try { await approveReq.mutateAsync({ id: r.id, action: 'pendente' }) } catch (e) { alert(e instanceof Error ? e.message : String(e)) } }} disabled={approveReq.isPending} className="btn btn-secondary btn-sm">Aprovar pendente</button>
+                          <button onClick={async () => { try { await approveReq.mutateAsync({ id: r.id, action: 'pago' }) } catch (e) { alert(e instanceof Error ? e.message : String(e)) } }} disabled={approveReq.isPending} className="btn btn-primary btn-sm">Aprovar pago</button>
+                          <button onClick={async () => { try { await approveReq.mutateAsync({ id: r.id, action: 'recusado' }) } catch (e) { alert(e instanceof Error ? e.message : String(e)) } }} disabled={approveReq.isPending} className="btn btn-ghost btn-sm">Recusar</button>
                         </div>
                       </div>
                     ))}
@@ -436,7 +440,7 @@ export default function Cartelas() {
                   {pend.map((r)=>(
                     <div key={r.id} className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-3" style={{ background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--radius-sm)'}}>
                       <div><p className="text-sm font-bold" style={{color:'var(--fg)'}}>{r.numbers.join(', ')} — {r.buyer_name}</p><p className="text-xs" style={{color:'var(--muted)'}}>{r.buyer_cell||'sem cell'} · {new Date(r.created_at).toLocaleString('pt-BR')}</p></div>
-                      <div className="flex gap-1.5"><button onClick={()=>approveReq.mutate({id:r.id,action:'pendente'})} className="btn btn-secondary btn-sm">Pendente</button><button onClick={()=>approveReq.mutate({id:r.id,action:'pago'})} className="btn btn-primary btn-sm">Pago</button><button onClick={()=>approveReq.mutate({id:r.id,action:'recusado'})} className="btn btn-ghost btn-sm">Recusar</button></div>
+                      <div className="flex gap-1.5"><button onClick={async()=>{ try{ await approveReq.mutateAsync({id:r.id,action:'pendente'}) }catch(e){ alert(e instanceof Error?e.message:String(e)) } }} className="btn btn-secondary btn-sm">Pendente</button><button onClick={async()=>{ try{ await approveReq.mutateAsync({id:r.id,action:'pago'}) }catch(e){ alert(e instanceof Error?e.message:String(e)) } }} className="btn btn-primary btn-sm">Pago</button><button onClick={async()=>{ try{ await approveReq.mutateAsync({id:r.id,action:'recusado'}) }catch(e){ alert(e instanceof Error?e.message:String(e)) } }} className="btn btn-ghost btn-sm">Recusar</button></div>
                     </div>
                   ))}
                 </div>
