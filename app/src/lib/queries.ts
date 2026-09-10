@@ -80,9 +80,9 @@ export function useProfiles() {
     queryKey: ['profiles'],
     queryFn: async () => {
       if (!supabase) throw new Error('Serviço indisponível')
-      const { data, error } = await supabase.from('profiles').select('id, name, role').order('name')
+      const { data, error } = await supabase.from('profiles').select('id, name, role, phone, is_active, must_change_password').order('name')
       if (error) throw error
-      return data as Array<{ id: string; name: string; role: string }>
+      return data as Array<{ id: string; name: string; role: string; phone: string | null; is_active: boolean; must_change_password: boolean }>
     },
   })
 }

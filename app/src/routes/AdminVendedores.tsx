@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAuth } from '../store/auth'
 import { useProfiles } from '../lib/queries'
 import { supabase } from '../lib/supabase'
 import { vendedorSchema } from '../lib/validation'
@@ -9,6 +10,7 @@ function slugify(nome: string, sobrenome: string) {
 }
 
 export default function AdminVendedores() {
+  const { profile: me } = useAuth()
   const { data: profiles, refetch, isLoading } = useProfiles()
   const [nome, setNome] = useState('')
   const [sobrenome, setSobrenome] = useState('')
@@ -94,6 +96,34 @@ export default function AdminVendedores() {
 
   const sellers = (profiles ?? []).filter((p) => p.role === 'seller')
   const admins = (profiles ?? []).filter((p) => p.role === 'admin')
+  const allUsers = profiles ?? []
+
+  async function handleToggleActive(id: string, isActive: boolean, name: string) {
+    if (id === me?.id) return setErr('Não pode desativar a si mesmo')
+    const action = isActive ? 'desativar' : 'reativar'
+    if (!confirm(`${action} ${name}? ${isActive ? 'Login será bloqueado.' : ''}`)) return
+    setErr(null); setMsg(null)
+    try {
+      const rpc = isActive ? 'deactivate_user' : 'activate_user'
+      const { error } = await supabase!.rpc(rpc as 'deactivate_user', { p_user_id: id } as never)
+      if (error) throw error
+      setMsg(`${name} ${isActive ? 'desativado' : 'reativado'}`)
+      refetch()
+    } catch (e) { setErr(e instanceof Error ? e.message : String(e)) }
+  }
+
+  async function handleDelete(id: string, name: string) {
+    if (id === me?.id) return setErr('Não pode deletar a si mesmo')
+    if (!confirm(`Deletar ${name} permanentemente? Só funciona se não tiver cartelas/vendas.`)) return
+    if (!confirm(`Confirma deleção de ${name}?`)) return
+    setErr(null); setMsg(null)
+    try {
+      const { error } = await supabase!.rpc('delete_user', { p_user_id: id } as never)
+      if (error) throw error
+      setMsg(`${name} deletado`)
+      refetch()
+    } catch (e) { setErr(e instanceof Error ? e.message : String(e)) }
+  }
 
   return (
     <div className="space-y-6">
@@ -136,21 +166,29 @@ export default function AdminVendedores() {
 
       <div className="overflow-hidden shadow-sm" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
         <div className="px-4 py-3 flex items-center justify-between" style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-          <h3 className="font-semibold" style={{ color: 'var(--fg)' }}>Vendedores ({sellers.length})</h3>
-          <span className="text-xs" style={{ color: 'var(--muted)' }}>Admins: {admins.map((a) => a.name).join(', ')}</span>
+          <h3 className="font-semibold" style={{ color: 'var(--fg)' }}>Vendedores ({sellers.length}) · Admins ({admins.length})</h3>
+          <span className="text-xs" style={{ color: 'var(--muted)' }}>{allUsers.length} usuários</span>
         </div>
         {isLoading ? <p className="p-6 text-sm" style={{ color: 'var(--muted)' }}>Carregando...</p> : (
           <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
-            {sellers.map((s) => (
-              <div key={s.id} className="px-4 py-3 flex items-center justify-between gap-3">
+            {allUsers.map((u) => (
+              <div key={u.id} className="px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3" style={{ opacity: (u as { is_active: boolean }).is_active === false ? 0.6 : 1 }}>
                 <div>
-                  <p className="font-medium" style={{ color: 'var(--fg)' }}>{s.name}</p>
-                  <p className="text-xs font-mono" style={{ color: 'var(--muted)' }}>{s.id.slice(0, 8)} · {s.role}</p>
+                  <p className="font-medium" style={{ color: 'var(--fg)' }}>{u.name} {(u as { is_active: boolean }).is_active === false && <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'color-mix(in oklch, var(--danger) 12%, var(--surface))', border: '1px solid var(--danger)', color: 'var(--danger)' }}>desativado</span>}</p>
+                  <p className="text-xs font-mono" style={{ color: 'var(--muted)' }}>{u.id.slice(0, 8)} · {u.role} {u.phone ? `· ${u.phone}` : ''} {u.id === me?.id ? '· você' : ''}</p>
                 </div>
-                <button onClick={() => handleReset(s.id, s.name)} className="btn btn-ghost btn-sm">Resetar senha</button>
+                <div className="flex gap-1.5 flex-wrap">
+                  <button onClick={() => handleReset(u.id, u.name)} className="btn btn-ghost btn-sm">Resetar</button>
+                  {(u as { is_active: boolean }).is_active !== false ? (
+                    <button onClick={() => handleToggleActive(u.id, true, u.name)} disabled={u.id === me?.id} className="btn btn-ghost btn-sm disabled:opacity-40">Desativar</button>
+                  ) : (
+                    <button onClick={() => handleToggleActive(u.id, false, u.name)} className="btn btn-ghost btn-sm">Reativar</button>
+                  )}
+                  <button onClick={() => handleDelete(u.id, u.name)} disabled={u.id === me?.id} className="btn btn-ghost btn-sm disabled:opacity-40" style={{ color: 'var(--danger)' }}>Deletar</button>
+                </div>
               </div>
             ))}
-            {sellers.length === 0 && <p className="p-6 text-sm text-center" style={{ color: 'var(--muted)' }}>Nenhum vendedor</p>}
+            {allUsers.length === 0 && <p className="p-6 text-sm text-center" style={{ color: 'var(--muted)' }}>Nenhum usuário</p>}
           </div>
         )}
       </div>

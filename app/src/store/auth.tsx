@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 type Role = 'admin' | 'seller'
-type Profile = { id: string; role: Role; name: string; phone?: string | null; must_change_password?: boolean } | null
+type Profile = { id: string; role: Role; name: string; phone?: string | null; must_change_password?: boolean; is_active?: boolean } | null
 
 type AuthCtx = {
   profile: Profile
@@ -29,13 +29,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true
 
     async function loadProfile(userId: string) {
-      const { data, error } = await supabase!.from('profiles').select('id, role, name, phone, must_change_password').eq('id', userId).single()
+      const { data, error } = await supabase!.from('profiles').select('id, role, name, phone, must_change_password, is_active').eq('id', userId).single()
       if (!mounted) return
       if (error) {
         console.error('[auth] erro ao carregar profile', error)
         setProfile(null)
       } else {
-        setProfile(data as Profile)
+        if ((data as unknown as Profile)?.is_active === false) {
+          console.warn('[auth] usuário desativado')
+          await supabase!.auth.signOut()
+          setProfile(null)
+        } else {
+          setProfile(data as Profile)
+        }
       }
       setLoading(false)
     }
@@ -108,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!supabase) return
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      const { data } = await supabase.from('profiles').select('id, role, name, phone, must_change_password').eq('id', user.id).single()
+      const { data } = await supabase.from('profiles').select('id, role, name, phone, must_change_password, is_active').eq('id', user.id).single()
       if (data) setProfile(data as Profile)
     }
   }
