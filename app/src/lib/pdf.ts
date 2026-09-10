@@ -56,11 +56,11 @@ export function exportVendasPdf(rows: PdfRow[], opts: { edition: string; userNam
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
-  doc.text('CAPELA NOTURNA  •  RIFA BORROMEU 2026', 36, 26)
+  doc.text('RIFA BORROMEU 2026', 36, 26)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7)
   doc.setTextColor(...C.accentSoft)
-  doc.text('PWA  •  SISTEMA DE GESTÃO  •  POT  •  CAPELA', 36, 36)
+  doc.text('PWA  •  SISTEMA DE GESTÃO  •  POT', 36, 36)
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
@@ -195,7 +195,7 @@ export function exportVendasPdf(rows: PdfRow[], opts: { edition: string; userNam
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(6)
     doc.setTextColor(...C.muted)
-    doc.text(`Rifa Borromeu 2026  •  Capela Noturna  •  POT  •  Página ${i}/${pageCount}`, 36, H - 16)
+    doc.text(`Rifa Borromeu 2026  •  POT  •  Página ${i}/${pageCount}`, 36, H - 16)
     doc.text(`Gerado ${ts}  •  ${opts.userName}  •  ${opts.edition}`, W - 36, H - 16, { align: 'right' })
   }
 

@@ -108,7 +108,6 @@ export default function Login() {
             <p className="text-center text-xs" style={{ color: 'var(--muted)' }}>Esqueceu? Fale com o admin.</p>
           </form>
         </div>
-        <p className="text-center text-xs mt-4" style={{ color: 'color-mix(in oklch, var(--muted) 80%, transparent)' }}>Capela Noturna · luz noturna · madeira & céu</p>
       </div>
     </div>
   )

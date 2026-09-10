@@ -198,7 +198,6 @@ export default function AdminVendedores() {
                 <div key={u.id} className="px-4 py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3" style={{ opacity: isActive ? 1 : 0.6 }}>
                   <div className="min-w-0">
                     <p className="font-medium truncate" style={{ color: 'var(--fg)' }}>{u.name} {!isActive && <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'color-mix(in oklch, var(--danger) 12%, var(--surface))', border: '1px solid var(--danger)', color: 'var(--danger)' }}>desativado</span>} {isMe && <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>você</span>}</p>
-                    <p className="text-xs font-mono" style={{ color: 'var(--muted)' }}>{u.id.slice(0, 8)} · {u.role}{u.phone ? ` · ${u.phone}` : ' · sem tel.'}{isMe ? ' · edite nome/tel em Perfil' : ''}</p>
                   </div>
                   <div className="flex gap-1.5 flex-wrap items-center">
                     {isMe ? (
