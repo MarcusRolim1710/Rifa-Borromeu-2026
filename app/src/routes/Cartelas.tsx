@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../store/auth'
+import { supabase } from '../lib/supabase'
+import { QRCodeSVG } from 'qrcode.react'
 import {
   useCartelas,
   useCreateCartelasLote,
@@ -9,6 +11,10 @@ import {
   useSales,
   useRequestDevolucao,
   useResolveDevolucao,
+  useCreateQrToken,
+  useRevokeQrToken,
+  useSaleRequests,
+  useApproveSaleRequest,
   findNextGap,
   findAllGaps,
 } from '../lib/queries'
@@ -31,6 +37,42 @@ export default function Cartelas() {
   const [err, setErr] = useState<string | null>(null)
   const [selectedSeller, setSelectedSeller] = useState<string | null>(null)
   const [showCartelas, setShowCartelas] = useState(false)
+  const createQr = useCreateQrToken()
+  const revokeQr = useRevokeQrToken()
+  const approveReq = useApproveSaleRequest()
+  const { data: reqsAll } = useSaleRequests()
+  const [qrOpen, setQrOpen] = useState<string | null>(null)
+  const [qrToken, setQrToken] = useState<string | null>(null)
+  const [qrExpires, setQrExpires] = useState<string | null>(null)
+  const [qrLeft, setQrLeft] = useState('')
+
+  // countdown QR 15min
+  useEffect(() => {
+    if (!qrExpires) return
+    const tick = () => {
+      const ms = new Date(qrExpires).getTime() - Date.now()
+      if (ms <= 0) setQrLeft('Expirado')
+      else { const m = Math.floor(ms/60000); const s = Math.floor((ms%60000)/1000); setQrLeft(`${m}:${String(s).padStart(2,'0')}`) }
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [qrExpires])
+  // realtime solicitações
+  useEffect(() => {
+    if (!supabase || !profile) return
+    const ch = supabase.channel('sale_requests_cartelas').on('postgres_changes', { event: '*', schema: 'public', table: 'sale_requests' }, () => {}).subscribe()
+    return () => { if (supabase) supabase.removeChannel(ch) }
+  }, [profile])
+
+  async function handleQr(cartelaId: string) {
+    setQrOpen(cartelaId); setQrToken(null); setQrExpires(null)
+    try {
+      const t = await createQr.mutateAsync(cartelaId)
+      setQrToken(t)
+      setQrExpires(new Date(Date.now()+15*60*1000).toISOString())
+    } catch (e) { alert(e instanceof Error ? e.message : String(e)) }
+  }
 
   // Cartelas mapeadas
   const cartelas = useMemo(
@@ -155,46 +197,88 @@ export default function Cartelas() {
           <div className="h-32 animate-pulse" style={{ borderRadius: 'var(--radius)', background: 'var(--surface)', border: '1px solid var(--border)' }} />
         ) : (
           <div className="grid gap-4">
-            {mine.map((c) => (
-              <div key={c.id} className="p-4 md:p-5 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-4" style={{ background: 'var(--surface)', border: `1px solid ${c.status === 'solicitada' ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 'var(--radius)' }}>
+            {mine.map((c) => {
+              const pendentes = (reqsAll ?? []).filter((r) => r.cartela_id === c.id && r.status === 'aguardando')
+              return (
+              <div key={c.id} className="p-4 md:p-5 shadow-sm flex flex-col gap-3" style={{ background: 'var(--surface)', border: `1px solid ${c.status === 'solicitada' ? 'var(--accent)' : pendentes.length ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 'var(--radius)' }}>
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-mono text-sm font-bold px-2.5 py-1 rounded-full" style={{ background: 'var(--night)', color: 'var(--bg)' }}>{c.start}—{c.end}</span>
                     <span className={`text-xs font-bold px-2 py-1 rounded-full`} style={{ background: c.status === 'solicitada' ? 'color-mix(in oklch, var(--accent) 16%, var(--surface))' : 'var(--bg)', color: c.status === 'solicitada' ? 'var(--accent-strong)' : 'var(--muted)', border: '1px solid var(--border)' }}>
                       {c.status === 'solicitada' ? '● solicitação enviada' : `${c.vendas} vendas`}
                     </span>
+                    {pendentes.length > 0 && <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: 'var(--accent)', color: 'white' }}>{pendentes.length} reserva(s) aguardando</span>}
                   </div>
                   <div className="mt-3 grid grid-cols-10 gap-1.5 max-w-[360px]">
                     {Array.from({ length: 20 }, (_, i) => c.start + i).map((n) => {
                       const sold = (salesReal ?? []).some((s) => s.number_int === n && s.cartela_id === c.id)
+                      const pend = (reqsAll ?? []).some((r) => r.cartela_id === c.id && r.status === 'aguardando' && r.numbers.includes(n))
                       return (
-                        <span key={n} className="h-8 grid place-items-center rounded-lg text-xs font-mono font-bold" style={{ background: sold ? 'var(--accent)' : 'var(--bg)', color: sold ? 'white' : 'var(--fg)', border: `1px solid ${sold ? 'color-mix(in oklch, var(--accent) 30%, transparent)' : 'var(--border)'}` }}>{n}</span>
+                        <span key={n} className="h-8 grid place-items-center rounded-lg text-xs font-mono font-bold" style={{ background: sold ? 'var(--accent)' : pend ? 'color-mix(in oklch, var(--accent) 35%, var(--bg))' : 'var(--bg)', color: sold ? 'white' : pend ? 'var(--accent-strong)' : 'var(--fg)', border: `1px solid ${sold ? 'color-mix(in oklch, var(--accent) 30%, transparent)' : pend ? 'var(--accent)' : 'var(--border)'}` }}>{n}</span>
                       )
                     })}
                   </div>
                 </div>
-                {c.status === 'alocado' ? (
-                  <button
-                    onClick={async () => {
-                      if (c.vendas > 0) return alert('Cartela com vendas não pode ser devolvida.')
-                      if (!confirm(`Solicitar devolução de ${c.start}-${c.end}?`)) return
-                      try {
-                        await requestDev.mutateAsync(c.id)
-                      } catch (e) {
-                        alert(e instanceof Error ? e.message : String(e))
-                      }
-                    }}
-                    disabled={requestDev.isPending}
-                    className="btn btn-ghost self-start"
-                  >
-                    Solicitar devolução
-                  </button>
-                ) : c.status === 'solicitada' ? (
-                  <span className="text-xs font-semibold px-3 py-1.5 rounded-full self-start" style={{ background: 'color-mix(in oklch, var(--accent) 12%, var(--surface))', border: '1px solid var(--accent)', color: 'var(--accent-strong)' }}>Aguardando aprovação</span>
-                ) : null}
+                <div className="flex flex-col gap-2 self-start">
+                {c.status === 'alocado' && (
+                  <>
+                    <button onClick={() => handleQr(c.id)} className="btn btn-primary btn-sm">QR Venda — comprador escolhe</button>
+                    <button
+                      onClick={async () => {
+                        if (c.vendas > 0) return alert('Cartela com vendas não pode ser devolvida.')
+                        if (!confirm(`Solicitar devolução de ${c.start}-${c.end}?`)) return
+                        try { await requestDev.mutateAsync(c.id) } catch (e) { alert(e instanceof Error ? e.message : String(e)) }
+                      }}
+                      disabled={requestDev.isPending}
+                      className="btn btn-ghost btn-sm"
+                    >
+                      Solicitar devolução
+                    </button>
+                  </>
+                )}
+                {c.status === 'solicitada' && <span className="text-xs font-semibold px-3 py-1.5 rounded-full self-start" style={{ background: 'color-mix(in oklch, var(--accent) 12%, var(--surface))', border: '1px solid var(--accent)', color: 'var(--accent-strong)' }}>Aguardando aprovação</span>}
+                </div>
+                </div>
+                {pendentes.length > 0 && (
+                  <div className="space-y-2" style={{ borderTop: '1px dashed var(--border)', paddingTop: '12px' }}>
+                    <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--accent-strong)' }}>Reservas para aprovar (QR 15min)</p>
+                    {pendentes.map((r) => (
+                      <div key={r.id} className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-3" style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
+                        <div>
+                          <p className="text-sm font-bold" style={{ color: 'var(--fg)' }}>{r.numbers.join(', ')} — {r.buyer_name}</p>
+                          <p className="text-xs" style={{ color: 'var(--muted)' }}>{r.buyer_cell || 'sem cell'} · {new Date(r.created_at).toLocaleString('pt-BR')}</p>
+                        </div>
+                        <div className="flex gap-1.5">
+                          <button onClick={() => approveReq.mutate({ id: r.id, action: 'pendente' })} disabled={approveReq.isPending} className="btn btn-secondary btn-sm">Aprovar pendente</button>
+                          <button onClick={() => approveReq.mutate({ id: r.id, action: 'pago' })} disabled={approveReq.isPending} className="btn btn-primary btn-sm">Aprovar pago</button>
+                          <button onClick={() => approveReq.mutate({ id: r.id, action: 'recusado' })} disabled={approveReq.isPending} className="btn btn-ghost btn-sm">Recusar</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
+            )})}
             {mine.length === 0 && <p className="text-center text-sm py-10" style={{ color: 'var(--muted)', background: 'var(--surface)', border: '1px dashed var(--border)', borderRadius: 'var(--radius)' }}>Nenhuma cartela atribuída a você.</p>}
+          </div>
+        )}
+        {qrOpen && (
+          <div className="fixed inset-0 z-50 grid place-items-center p-4" style={{ background: 'color-mix(in oklch, var(--night) 55%, transparent)' }} onClick={() => setQrOpen(null)}>
+            <div className="w-full max-w-sm p-6 text-center" style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }} onClick={(e) => e.stopPropagation()}>
+              <p className="font-display text-lg" style={{ color: 'var(--fg)' }}>QR Venda — cartela {cartelas.find((c)=>c.id===qrOpen)?.start}—{cartelas.find((c)=>c.id===qrOpen)?.end}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>Comprador escaneia e escolhe números · expira em {qrLeft || '15:00'}</p>
+              <div className="mt-4 grid place-items-center p-4" style={{ background: 'white', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+                {qrToken ? <QRCodeSVG value={`${window.location.origin}/r/${qrToken}`} size={180} /> : <p className="text-sm" style={{ color: 'var(--muted)' }}>Gerando QR...</p>}
+              </div>
+              {qrToken && <p className="text-xs mt-2 break-all" style={{ color: 'var(--muted)' }}>{`${window.location.origin}/r/${qrToken}`}</p>}
+              <div className="mt-4 flex gap-2">
+                <button onClick={() => { if(qrToken) navigator.clipboard.writeText(`${window.location.origin}/r/${qrToken}`)}} className="btn btn-secondary flex-1">Copiar link</button>
+                <button onClick={() => { if(qrToken) revokeQr.mutate(qrToken); setQrOpen(null)}} className="btn btn-ghost flex-1">Revogar</button>
+              </div>
+              <button onClick={() => setQrOpen(null)} className="btn btn-ghost w-full mt-2">Fechar</button>
+              <p className="text-xs mt-3" style={{ color: 'var(--muted)' }}>Cada QR vale 15 min e pode ser usado por 2+ compradores simultâneos. Após aprovar no card acima, o número sai do disponível.</p>
+            </div>
           </div>
         )}
       </div>
@@ -307,8 +391,11 @@ export default function Cartelas() {
 
       {showCartelas && (
         <div className="grid gap-4">
-          {selCartelas.map((c) => (
-            <div key={c.id} className="p-4 md:p-5 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-4" style={{ background: 'var(--surface)', border: `1px solid ${c.status === 'solicitada' ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 'var(--radius)' }}>
+          {selCartelas.map((c) => {
+            const pend = (reqsAll ?? []).filter((r) => r.cartela_id === c.id && r.status === 'aguardando')
+            return (
+            <div key={c.id} className="p-4 md:p-5 shadow-sm flex flex-col gap-3" style={{ background: 'var(--surface)', border: `1px solid ${c.status === 'solicitada' ? 'var(--accent)' : pend.length ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 'var(--radius)' }}>
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-mono text-sm font-bold px-2.5 py-1 rounded-full" style={{ background: c.status === 'solicitada' ? 'var(--accent)' : 'var(--night)', color: 'white' }}>{c.start}—{c.end}</span>
@@ -316,13 +403,15 @@ export default function Cartelas() {
                   <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: c.status === 'solicitada' ? 'color-mix(in oklch, var(--accent) 14%, var(--surface))' : 'color-mix(in oklch, var(--success) 10%, var(--surface))', color: c.status === 'solicitada' ? 'var(--accent-strong)' : 'var(--leaf)', border: '1px solid var(--border)' }}>
                     {c.status === 'solicitada' ? '● solicitação de devolução' : `${c.vendas} vendas`}
                   </span>
+                  {pend.length>0 && <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: 'var(--accent)', color: 'white' }}>{pend.length} reserva(s)</span>}
                 </div>
                 {c.status === 'solicitada' && <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>Solicitada em {c.solicitado_em ? new Date(c.solicitado_em).toLocaleString('pt-BR') : ''}</p>}
                 <div className="mt-3 grid grid-cols-10 gap-1.5 max-w-[360px]">
                   {Array.from({ length: 20 }, (_, i) => c.start + i).map((n) => {
                     const sold = (salesReal ?? []).some((s) => s.number_int === n && s.cartela_id === c.id)
+                    const isPend = pend.some((r)=>r.numbers.includes(n))
                     return (
-                      <span key={n} className="h-8 grid place-items-center rounded-lg text-xs font-mono font-bold" style={{ background: sold ? 'var(--accent)' : 'var(--bg)', color: sold ? 'white' : 'var(--fg)', border: `1px solid ${sold ? 'color-mix(in oklch, var(--accent) 30%, transparent)' : 'var(--border)'}` }}>{n}</span>
+                      <span key={n} className="h-8 grid place-items-center rounded-lg text-xs font-mono font-bold" style={{ background: sold ? 'var(--accent)' : isPend ? 'color-mix(in oklch, var(--accent) 35%, var(--bg))' : 'var(--bg)', color: sold ? 'white' : isPend ? 'var(--accent-strong)' : 'var(--fg)', border: `1px solid ${sold ? 'color-mix(in oklch, var(--accent) 30%, transparent)' : isPend ? 'var(--accent)' : 'var(--border)'}` }}>{n}</span>
                     )
                   })}
                 </div>
@@ -332,25 +421,28 @@ export default function Cartelas() {
                   <button onClick={() => resolveDev.mutate({ id: c.id, accept: true })} disabled={resolveDev.isPending} className="btn btn-primary btn-sm">Aceitar devolução</button>
                   <button onClick={() => resolveDev.mutate({ id: c.id, accept: false })} disabled={resolveDev.isPending} className="btn btn-ghost btn-sm">Recusar</button>
                 </div>
-              ) : c.status === 'alocado' && c.sellerId === profile?.id && c.vendas === 0 ? (
-                <button
-                  onClick={async () => {
-                    if (!confirm(`Devolver cartela ${c.start}—${c.end} ao POTE? Ela ficará disponível para atribuir novamente.`)) return
-                    try { await devolverDireto.mutateAsync(c.id) } catch (e) { alert(e instanceof Error ? e.message : String(e)) }
-                  }}
-                  disabled={devolverDireto.isPending}
-                  className="btn btn-ghost btn-sm self-start"
-                  style={{ border: '1px solid var(--border)' }}
-                >
-                  Devolver ao POTE
-                </button>
-              ) : c.status === 'alocado' && c.vendas > 0 ? (
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full self-start" style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>Contém {c.vendas} venda(s) — não pode devolver</span>
+              ) : c.status === 'alocado' ? (
+                <div className="flex flex-col gap-2 self-start">
+                  <button onClick={() => handleQr(c.id)} className="btn btn-primary btn-sm">QR Venda</button>
+                  {c.sellerId === profile?.id && c.vendas===0 && <button onClick={async()=>{ if(!confirm(`Devolver ${c.start}—${c.end} ao POTE?`))return; try{await devolverDireto.mutateAsync(c.id)}catch(e){alert(e instanceof Error?e.message:String(e))}}} disabled={devolverDireto.isPending} className="btn btn-ghost btn-sm" style={{ border:'1px solid var(--border)'}}>Devolver ao POTE</button>}
+                  {c.vendas>0 && c.sellerId!==profile?.id && <span className="text-xs" style={{color:'var(--muted)'}}>{c.vendas} vendidos</span>}
+                </div>
               ) : (
                 <span className="text-xs self-start" style={{ color: 'var(--muted)' }}>{c.vendas} vendidos</span>
               )}
+              </div>
+              {pend.length>0 && (
+                <div className="space-y-2" style={{ borderTop:'1px dashed var(--border)', paddingTop:'12px'}}>
+                  {pend.map((r)=>(
+                    <div key={r.id} className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-3" style={{ background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--radius-sm)'}}>
+                      <div><p className="text-sm font-bold" style={{color:'var(--fg)'}}>{r.numbers.join(', ')} — {r.buyer_name}</p><p className="text-xs" style={{color:'var(--muted)'}}>{r.buyer_cell||'sem cell'} · {new Date(r.created_at).toLocaleString('pt-BR')}</p></div>
+                      <div className="flex gap-1.5"><button onClick={()=>approveReq.mutate({id:r.id,action:'pendente'})} className="btn btn-secondary btn-sm">Pendente</button><button onClick={()=>approveReq.mutate({id:r.id,action:'pago'})} className="btn btn-primary btn-sm">Pago</button><button onClick={()=>approveReq.mutate({id:r.id,action:'recusado'})} className="btn btn-ghost btn-sm">Recusar</button></div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
+          )})}
           {selCartelas.length === 0 && <p className="text-center text-sm py-10" style={{ color: 'var(--muted)', background: 'var(--surface)', border: '1px dashed var(--border)', borderRadius: 'var(--radius)' }}>Nenhuma cartela para este vendedor.</p>}
           {/* histórico devolvidas */}
           {cartelas.filter((c) => c.sellerId === selectedSeller && c.status === 'devolvido').length > 0 && (
@@ -364,7 +456,21 @@ export default function Cartelas() {
             </div>
           )}
         </div>
+       )}
+      {qrOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center p-4" style={{ background: 'color-mix(in oklch, var(--night) 55%, transparent)' }} onClick={() => setQrOpen(null)}>
+          <div className="w-full max-w-sm p-6 text-center" style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }} onClick={(e)=>e.stopPropagation()}>
+            <p className="font-display text-lg" style={{ color: 'var(--fg)' }}>QR Venda — cartela {cartelas.find((c)=>c.id===qrOpen)?.start}—{cartelas.find((c)=>c.id===qrOpen)?.end}</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>Expira em {qrLeft || '15:00'}</p>
+            <div className="mt-4 grid place-items-center p-4" style={{ background: 'white', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+              {qrToken ? <QRCodeSVG value={`${window.location.origin}/r/${qrToken}`} size={180} /> : <p className="text-sm" style={{ color: 'var(--muted)' }}>Gerando QR...</p>}
+            </div>
+            {qrToken && <p className="text-xs mt-2 break-all" style={{ color: 'var(--muted)' }}>{`${window.location.origin}/r/${qrToken}`}</p>}
+            <div className="mt-4 flex gap-2"><button onClick={()=>{ if(qrToken) navigator.clipboard.writeText(`${window.location.origin}/r/${qrToken}`)}} className="btn btn-secondary flex-1">Copiar link</button><button onClick={()=>{ if(qrToken) revokeQr.mutate(qrToken); setQrOpen(null)}} className="btn btn-ghost flex-1">Revogar</button></div>
+            <button onClick={()=>setQrOpen(null)} className="btn btn-ghost w-full mt-2">Fechar</button>
+          </div>
+        </div>
       )}
-    </div>
-  )
+     </div>
+   )
 }

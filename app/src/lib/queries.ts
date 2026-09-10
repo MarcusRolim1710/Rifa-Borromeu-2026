@@ -242,6 +242,88 @@ export function useDeleteSale() {
   })
 }
 
+// ── QR cartela (vendedor mostra, comprador escaneia) ──
+export type QrCartela = { cartela_id: string; seller_id: string; edition_id: string; start_int: number; end_int: number; seller_name: string; expires_at: string; revoked: boolean }
+
+export function useCreateQrToken() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (cartela_id: string) => {
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { data, error } = await supabase.rpc('create_qr_token', { p_cartela_id: cartela_id })
+      if (error) throw error
+      return data as string
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['qr_tokens'] }),
+  })
+}
+export function useRevokeQrToken() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (token: string) => {
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { error } = await supabase.rpc('revoke_qr_token', { p_token: token })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['qr_tokens'] }),
+  })
+}
+export function useQrCartela(token: string | null) {
+  return useQuery({
+    queryKey: ['qr_cartela', token],
+    enabled: !!token,
+    queryFn: async () => {
+      if (!supabase || !token) throw new Error('Token inválido')
+      const { data, error } = await supabase.rpc('get_qr_cartela', { p_token: token })
+      if (error) throw error
+      const arr = data as unknown as QrCartela | QrCartela[]
+      const row = (Array.isArray(arr) ? arr[0] : arr) as QrCartela | undefined
+      if (!row || !row.cartela_id) throw new Error('QR não encontrado')
+      return row as QrCartela
+    },
+  })
+}
+export type SaleRequestRow = { id: string; cartela_id: string; seller_id: string; edition_id: string; numbers: number[]; buyer_name: string; buyer_cell: string; status: string; token_id: string | null; created_at: string }
+export function useSaleRequests(cartelaId?: string) {
+  return useQuery({
+    queryKey: ['sale_requests', cartelaId ?? 'all'],
+    refetchInterval: 4000,
+    queryFn: async () => {
+      if (!supabase) throw new Error('Serviço indisponível')
+      let q = supabase.from('sale_requests').select('id, cartela_id, seller_id, edition_id, numbers, buyer_name, buyer_cell, status, token_id, created_at').order('created_at', { ascending: false })
+      if (cartelaId) q = q.eq('cartela_id', cartelaId)
+      const { data, error } = await q
+      if (error) throw error
+      return data as SaleRequestRow[]
+    },
+  })
+}
+export function useCreateSaleRequest() {
+  return useMutation({
+    mutationFn: async (payload: { token: string; numbers: number[]; buyer_name: string; buyer_cell: string }) => {
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { data, error } = await supabase.rpc('create_sale_request', { p_token: payload.token, p_numbers: payload.numbers, p_name: payload.buyer_name, p_cell: payload.buyer_cell })
+      if (error) throw error
+      return data as string
+    },
+  })
+}
+export function useApproveSaleRequest() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { id: string; action: 'pago' | 'pendente' | 'recusado' }) => {
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { error } = await supabase.rpc('approve_sale_request', { p_request_id: payload.id, p_action: payload.action })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sale_requests'] })
+      qc.invalidateQueries({ queryKey: ['sales'] })
+      qc.invalidateQueries({ queryKey: ['cartelas'] })
+    },
+  })
+}
+
 /** Encontra próximo gap disponível (buraco devolvido) ou max+1 */
 export function findNextGap(cartelas: Pick<CartelaRow, 'start_int' | 'end_int' | 'status'>[]): { start: number; end: number; isGap: boolean } | null {
   const active = cartelas.filter((c) => c.status !== 'devolvido').sort((a, b) => a.start_int - b.start_int)

@@ -11,6 +11,7 @@ const Vendas = lazy(() => import('./routes/Vendas'))
 const Perfil = lazy(() => import('./routes/Perfil'))
 const AdminVendedores = lazy(() => import('./routes/AdminVendedores'))
 const TrocarSenha = lazy(() => import('./routes/TrocarSenha'))
+const Reserva = lazy(() => import('./routes/Reserva'))
 
 const qc = new QueryClient()
 
@@ -51,6 +52,7 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/trocar-senha" element={<TrocarSenha />} />
+            <Route path="/r/:token" element={<Reserva />} />
             <Route path="/" element={<Protected><Dashboard /></Protected>} />
             <Route path="/cartelas" element={<Protected><Cartelas /></Protected>} />
             <Route path="/vendas" element={<Protected><Vendas /></Protected>} />
