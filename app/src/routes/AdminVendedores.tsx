@@ -10,8 +10,6 @@ function slugify(nome: string, sobrenome: string) {
   return `${norm(nome)}.${norm(sobrenome)}`
 }
 
-type AuditRow = { id: string; target_user_id: string; actor_id: string | null; action: string; old_value: unknown; new_value: unknown; created_at: string }
-
 export default function AdminVendedores() {
   const { profile: me, refreshProfile } = useAuth()
   const { data: profiles, refetch, isLoading } = useProfiles()
