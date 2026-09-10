@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../store/auth'
-import { useCartelas, useCreateSale, useEdition, useSales } from '../lib/queries'
+import { useCartelas, useCreateSale, useDeleteSale, useEdition, useSales, useUpdateSale } from '../lib/queries'
 
 export default function Vendas() {
   const { profile } = useAuth()
@@ -10,12 +10,22 @@ export default function Vendas() {
   const { data: cartelas } = useCartelas()
   const { data: salesReal, isLoading } = useSales()
   const create = useCreateSale()
+  const updateSale = useUpdateSale()
+  const deleteSale = useDeleteSale()
 
   const [number, setNumber] = useState('')
   const [buyer, setBuyer] = useState('')
   const [cell, setCell] = useState('')
   const [status, setStatus] = useState<'pago' | 'pendente'>('pendente')
   const [err, setErr] = useState<string | null>(null)
+  const [msg, setMsg] = useState<string | null>(null)
+
+  // edição: número travado
+  const [editing, setEditing] = useState<{ id: string; number: number; buyer: string; cell: string; status: 'pago' | 'pendente' } | null>(null)
+  const [editBuyer, setEditBuyer] = useState('')
+  const [editCell, setEditCell] = useState('')
+  const [editStatus, setEditStatus] = useState<'pago' | 'pendente'>('pendente')
+  const [editErr, setEditErr] = useState<string | null>(null)
 
   const minhasCartelas = (cartelas ?? []).filter((c) => c.seller_id === profile?.id && c.status === 'alocado')
   const temCartela = minhasCartelas.length > 0
@@ -32,35 +42,55 @@ export default function Vendas() {
     }))
 
   async function add() {
-    setErr(null)
+    setErr(null); setMsg(null)
     if (buyer.trim().split(/\s+/).length < 2) return setErr('Informe nome e sobrenome')
     if (!cell.trim()) return setErr('Cell obrigatório')
     const n = Number(number)
     if (!Number.isFinite(n)) return setErr('Número inválido')
     if (!edition) return setErr('Edição não encontrada')
-
     const cartela = cartelas?.find((c) => n >= c.start_int && n <= c.end_int && c.seller_id === profile?.id && c.status === 'alocado')
     if (!cartela) return setErr('Número não pertence a nenhuma cartela sua em status alocado')
     if (salesReal?.some((s) => s.number_int === n && s.edition_id === edition.id)) return setErr(`Número ${n} já vendido`)
-
     try {
-      await create.mutateAsync({
-        edition_id: edition.id,
-        cartela_id: cartela.id,
-        seller_id: profile?.id as string,
-        number_int: n,
-        buyer_name: buyer.trim(),
-        buyer_cell: cell.trim(),
-        payment_status: status,
-      })
-      setNumber(''); setBuyer(''); setCell('')
+      await create.mutateAsync({ edition_id: edition.id, cartela_id: cartela.id, seller_id: profile?.id as string, number_int: n, buyer_name: buyer.trim(), buyer_cell: cell.trim(), payment_status: status })
+      setNumber(''); setBuyer(''); setCell(''); setMsg(`Venda ${n} registrada`)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       if (msg.includes('already exists') || msg.includes('unique') || msg.includes('duplicate')) setErr(`Número ${n} já vendido`)
-      else if (msg.includes('nao pertence')) setErr(msg)
-      else if (msg.includes('buyer_name')) setErr('Informe nome e sobrenome')
       else setErr(msg)
     }
+  }
+
+  function openEdit(s: typeof visible[number]) {
+    setEditing(s); setEditBuyer(s.buyer); setEditCell(s.cell); setEditStatus(s.status); setEditErr(null)
+  }
+
+  async function saveEdit() {
+    if (!editing) return
+    setEditErr(null)
+    if (editBuyer.trim().split(/\s+/).length < 2) return setEditErr('Informe nome e sobrenome')
+    if (!editCell.trim()) return setEditErr('Cell obrigatório')
+    try {
+      await updateSale.mutateAsync({ id: editing.id, buyer_name: editBuyer, buyer_cell: editCell, payment_status: editStatus })
+      setMsg(`Venda ${editing.number} atualizada`)
+      setEditing(null)
+    } catch (e) { setEditErr(e instanceof Error ? e.message : String(e)) }
+  }
+
+  async function togglePaid(s: typeof visible[number]) {
+    const next: 'pago' | 'pendente' = s.status === 'pago' ? 'pendente' : 'pago'
+    if (!confirm(`${next === 'pago' ? 'Marcar' : 'Desfazer'} venda ${s.number} como ${next}?`)) return
+    setErr(null); setMsg(null)
+    try { await updateSale.mutateAsync({ id: s.id, buyer_name: s.buyer, buyer_cell: s.cell, payment_status: next }); setMsg(`Venda ${s.number} → ${next}`) }
+    catch (e) { setErr(e instanceof Error ? e.message : String(e)) }
+  }
+
+  async function cancelSale(s: typeof visible[number]) {
+    if (!confirm(`Cancelar venda ${s.number} de ${s.buyer}? Número ficará livre para outro comprar.`)) return
+    if (!confirm(`Confirma cancelamento definitivo da venda ${s.number}?`)) return
+    setErr(null); setMsg(null)
+    try { await deleteSale.mutateAsync(s.id); setMsg(`Venda ${s.number} cancelada · número livre`) }
+    catch (e) { setErr(e instanceof Error ? e.message : String(e)) }
   }
 
   return (
@@ -68,7 +98,7 @@ export default function Vendas() {
       <div className="flex items-baseline justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl" style={{ color: 'var(--fg)' }}>Minhas vendas</h1>
-          <p className="text-sm" style={{ color: 'var(--muted)' }}>{edition ? `${edition.name}` : ''}{isAdmin ? ' · admin vê só próprias' : ''}</p>
+          <p className="text-sm" style={{ color: 'var(--muted)' }}>{edition ? `${edition.name}` : ''}{isAdmin ? ' · admin vê só próprias' : ''} · número travado na edição</p>
         </div>
         <span className="hidden sm:inline-flex text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)' }}>{visible.length} registros</span>
       </div>
@@ -77,9 +107,7 @@ export default function Vendas() {
         <div className="p-6 text-center shadow-sm" style={{ background: 'var(--surface)', border: '1px dashed var(--border)', borderRadius: 'var(--radius)' }}>
           <p className="font-display font-bold" style={{ color: 'var(--fg)' }}>Sem cartelas atribuídas</p>
           <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>{isAdmin ? 'Você (admin) precisa atribuir cartelas a si mesmo para vender.' : 'Peça ao admin para atribuir cartelas a você.'}</p>
-          {isAdmin && (
-            <Link to="/cartelas" className="btn btn-primary mt-4 inline-flex">Atribuir cartela →</Link>
-          )}
+          {isAdmin && <Link to="/cartelas" className="btn btn-primary mt-4 inline-flex">Atribuir cartela →</Link>}
         </div>
       ) : null}
 
@@ -88,58 +116,32 @@ export default function Vendas() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <label className="block">
             <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Número *</span>
-            <input
-              value={number}
-              onChange={(e) => setNumber(e.target.value)}
-              placeholder="12"
-              className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none"
-              style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
-            />
+            <input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="12" className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
             <span className="text-xs" style={{ color: 'var(--muted)' }}>Suas cartelas: {minhasCartelas.map((c) => `${c.start_int}—${c.end_int}`).join(', ') || 'nenhuma'}</span>
           </label>
           <label className="block">
             <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Status *</span>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as never)}
-              className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none"
-              style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
-            >
+            <select value={status} onChange={(e) => setStatus(e.target.value as never)} className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}>
               <option value="pendente">Pendente · a receber</option>
               <option value="pago">Pago · recebido</option>
             </select>
           </label>
           <label className="block">
             <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Nome e sobrenome *</span>
-            <input
-              value={buyer}
-              onChange={(e) => setBuyer(e.target.value)}
-              placeholder="Maria Silva"
-              className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none"
-              style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
-            />
+            <input value={buyer} onChange={(e) => setBuyer(e.target.value)} placeholder="Maria Silva" className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
           </label>
           <label className="block">
             <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Cell *</span>
-            <input
-              value={cell}
-              onChange={(e) => setCell(e.target.value)}
-              placeholder="(85) 99999-0000"
-              className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none"
-              style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
-            />
+            <input value={cell} onChange={(e) => setCell(e.target.value)} placeholder="(85) 99999-0000" className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
           </label>
         </div>
         {err && <p className="mt-3 text-sm px-3 py-2.5" style={{ color: 'var(--danger)', background: 'color-mix(in oklch, var(--danger) 8%, var(--surface))', border: '1px solid color-mix(in oklch, var(--danger) 18%, transparent)', borderRadius: 'var(--radius-sm)' }}>{err}</p>}
-        <button onClick={add} disabled={create.isPending} className="btn btn-primary mt-4 disabled:opacity-50">
-          {create.isPending ? 'Registrando...' : 'Registrar venda'}
-        </button>
+        {msg && <p className="mt-3 text-sm px-3 py-2.5" style={{ color: 'var(--leaf)', background: 'color-mix(in oklch, var(--success) 10%, var(--surface))', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>{msg}</p>}
+        <button onClick={add} disabled={create.isPending} className="btn btn-primary mt-4 disabled:opacity-50">{create.isPending ? 'Registrando...' : 'Registrar venda'}</button>
       </div>
 
       <div className="overflow-hidden shadow-sm" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-        {isLoading ? (
-          <div className="p-8 text-center text-sm" style={{ color: 'var(--muted)' }}>Carregando...</div>
-        ) : (
+        {isLoading ? <div className="p-8 text-center text-sm" style={{ color: 'var(--muted)' }}>Carregando...</div> : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead style={{ background: 'var(--bg)', color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
@@ -147,8 +149,8 @@ export default function Vendas() {
                   <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Número</th>
                   <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Comprador</th>
                   <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Cell</th>
-                  <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Vendedor</th>
                   <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Status</th>
+                  <th className="text-left px-4 py-3 font-bold tracking-widest uppercase text-xs">Ações</th>
                 </tr>
               </thead>
               <tbody style={{ borderColor: 'var(--border)' }}>
@@ -157,18 +159,15 @@ export default function Vendas() {
                     <td className="px-4 py-3 font-mono font-bold" style={{ color: 'var(--fg)' }}>{s.number}</td>
                     <td className="px-4 py-3 font-medium" style={{ color: 'var(--fg)' }}>{s.buyer}</td>
                     <td className="px-4 py-3" style={{ color: 'var(--muted)' }}>{s.cell}</td>
-                    <td className="px-4 py-3" style={{ color: 'var(--muted)' }}>{s.seller}</td>
                     <td className="px-4 py-3">
-                      <span
-                        className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold"
-                        style={{
-                          border: '1px solid var(--border)',
-                          background: s.status === 'pago' ? 'color-mix(in oklch, var(--success) 10%, var(--surface))' : 'color-mix(in oklch, var(--accent) 12%, var(--surface))',
-                          color: s.status === 'pago' ? 'var(--leaf)' : 'var(--accent-strong)',
-                        }}
-                      >
-                        {s.status}
-                      </span>
+                      <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold" style={{ border: '1px solid var(--border)', background: s.status === 'pago' ? 'color-mix(in oklch, var(--success) 10%, var(--surface))' : 'color-mix(in oklch, var(--accent) 12%, var(--surface))', color: s.status === 'pago' ? 'var(--leaf)' : 'var(--accent-strong)' }}>{s.status}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1.5 flex-wrap">
+                        <button onClick={() => openEdit(s)} className="btn btn-ghost btn-sm">Editar</button>
+                        <button onClick={() => togglePaid(s)} disabled={updateSale.isPending} className="btn btn-ghost btn-sm disabled:opacity-40">{s.status === 'pago' ? '→ Pendente' : '→ Pago'}</button>
+                        <button onClick={() => cancelSale(s)} disabled={deleteSale.isPending} className="btn btn-ghost btn-sm disabled:opacity-40" style={{ color: 'var(--danger)' }}>Cancelar</button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -178,6 +177,39 @@ export default function Vendas() {
           </div>
         )}
       </div>
+
+      {editing && (
+        <div className="fixed inset-0 z-50 grid place-items-center p-4" style={{ background: 'color-mix(in oklch, var(--fg) 35%, transparent)', backdropFilter: 'blur(6px)' }} onClick={() => setEditing(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-lg p-6 shadow-xl space-y-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+            <h3 className="font-display text-xl" style={{ color: 'var(--fg)' }}>Editar venda #{editing.number}</h3>
+            <p className="text-xs" style={{ color: 'var(--muted)' }}>Número travado — não pode ser alterado (libere via Cancelar para revender)</p>
+            <label className="block">
+              <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Número</span>
+              <input value={editing.number} disabled className="mt-1.5 w-full px-3.5 py-2.5 text-sm font-mono" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)' }} />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Nome e sobrenome *</span>
+              <input value={editBuyer} onChange={(e) => setEditBuyer(e.target.value)} className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Cell *</span>
+              <input value={editCell} onChange={(e) => setEditCell(e.target.value)} className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
+            </label>
+            <label className="block">
+              <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Status *</span>
+              <select value={editStatus} onChange={(e) => setEditStatus(e.target.value as never)} className="mt-1.5 w-full px-3.5 py-2.5 text-sm" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}>
+                <option value="pendente">Pendente</option>
+                <option value="pago">Pago</option>
+              </select>
+            </label>
+            {editErr && <p className="text-sm px-3 py-2" style={{ color: 'var(--danger)', background: 'color-mix(in oklch, var(--danger) 8%, var(--surface))', border: '1px solid color-mix(in oklch, var(--danger) 18%, transparent)', borderRadius: 'var(--radius-sm)' }}>{editErr}</p>}
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setEditing(null)} className="btn btn-ghost">Fechar</button>
+              <button onClick={saveEdit} disabled={updateSale.isPending} className="btn btn-primary disabled:opacity-50">{updateSale.isPending ? 'Salvando...' : 'Salvar'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

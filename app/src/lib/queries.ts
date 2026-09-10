@@ -215,6 +215,33 @@ export function useCreateSale() {
   })
 }
 
+export function useUpdateSale() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { id: string; buyer_name: string; buyer_cell: string; payment_status: 'pago' | 'pendente' }) => {
+      if (!supabase) throw new Error('Serviço indisponível')
+      if (payload.buyer_name.trim().split(/\s+/).length < 2) throw new Error('Informe nome e sobrenome')
+      if (!payload.buyer_cell.trim()) throw new Error('Cell obrigatório')
+      const { data, error } = await supabase.from('sales').update({ buyer_name: payload.buyer_name.trim(), buyer_cell: payload.buyer_cell.trim(), payment_status: payload.payment_status }).eq('id', payload.id).select().single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sales'] }),
+  })
+}
+
+export function useDeleteSale() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!supabase) throw new Error('Serviço indisponível')
+      const { error } = await supabase.from('sales').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sales'] }),
+  })
+}
+
 /** Encontra próximo gap disponível (buraco devolvido) ou max+1 */
 export function findNextGap(cartelas: Pick<CartelaRow, 'start_int' | 'end_int' | 'status'>[]): { start: number; end: number; isGap: boolean } | null {
   const active = cartelas.filter((c) => c.status !== 'devolvido').sort((a, b) => a.start_int - b.start_int)
