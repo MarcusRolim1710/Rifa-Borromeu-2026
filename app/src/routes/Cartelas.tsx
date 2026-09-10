@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
 import { useAuth } from '../store/auth'
 import { supabase } from '../lib/supabase'
-import { QRCodeSVG } from 'qrcode.react'
+const QRCodeSVG = lazy(() => import('qrcode.react').then((m) => ({ default: m.QRCodeSVG })))
 import {
   useCartelas,
   useCreateCartelasLote,
@@ -269,7 +269,7 @@ export default function Cartelas() {
               <p className="font-display text-lg" style={{ color: 'var(--fg)' }}>QR Venda — cartela {cartelas.find((c)=>c.id===qrOpen)?.start}—{cartelas.find((c)=>c.id===qrOpen)?.end}</p>
               <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>Comprador escaneia e escolhe números · expira em {qrLeft || '15:00'}</p>
               <div className="mt-4 grid place-items-center p-4" style={{ background: 'white', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
-                {qrToken ? <QRCodeSVG value={`${window.location.origin}/r/${qrToken}`} size={180} /> : <p className="text-sm" style={{ color: 'var(--muted)' }}>Gerando QR...</p>}
+                {qrToken ? <Suspense fallback={<p className="text-sm" style={{ color: 'var(--muted)' }}>Gerando QR...</p>}><QRCodeSVG value={`${window.location.origin}/r/${qrToken}`} size={180} /></Suspense> : <p className="text-sm" style={{ color: 'var(--muted)' }}>Gerando QR...</p>}
               </div>
               {qrToken && <p className="text-xs mt-2 break-all" style={{ color: 'var(--muted)' }}>{`${window.location.origin}/r/${qrToken}`}</p>}
               <div className="mt-4 flex gap-2">
@@ -463,7 +463,7 @@ export default function Cartelas() {
             <p className="font-display text-lg" style={{ color: 'var(--fg)' }}>QR Venda — cartela {cartelas.find((c)=>c.id===qrOpen)?.start}—{cartelas.find((c)=>c.id===qrOpen)?.end}</p>
             <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>Expira em {qrLeft || '15:00'}</p>
             <div className="mt-4 grid place-items-center p-4" style={{ background: 'white', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
-              {qrToken ? <QRCodeSVG value={`${window.location.origin}/r/${qrToken}`} size={180} /> : <p className="text-sm" style={{ color: 'var(--muted)' }}>Gerando QR...</p>}
+              {qrToken ? <Suspense fallback={<p className="text-sm" style={{ color: 'var(--muted)' }}>Gerando QR...</p>}><QRCodeSVG value={`${window.location.origin}/r/${qrToken}`} size={180} /></Suspense> : <p className="text-sm" style={{ color: 'var(--muted)' }}>Gerando QR...</p>}
             </div>
             {qrToken && <p className="text-xs mt-2 break-all" style={{ color: 'var(--muted)' }}>{`${window.location.origin}/r/${qrToken}`}</p>}
             <div className="mt-4 flex gap-2"><button onClick={()=>{ if(qrToken) navigator.clipboard.writeText(`${window.location.origin}/r/${qrToken}`)}} className="btn btn-secondary flex-1">Copiar link</button><button onClick={()=>{ if(qrToken) revokeQr.mutate(qrToken); setQrOpen(null)}} className="btn btn-ghost flex-1">Revogar</button></div>
