@@ -52,7 +52,7 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/trocar-senha" element={<TrocarSenha />} />
-            <Route path="/r/:token" element={<Reserva />} />
+            <Route path="/r/:token" element={<QueryClientProvider client={qc}><Reserva /></QueryClientProvider>} />
             <Route path="/" element={<Protected><Dashboard /></Protected>} />
             <Route path="/cartelas" element={<Protected><Cartelas /></Protected>} />
             <Route path="/vendas" element={<Protected><Vendas /></Protected>} />
