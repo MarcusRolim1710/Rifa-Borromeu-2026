@@ -61,9 +61,13 @@ export default function Dashboard() {
         cell: s.cell,
         vendedor: s.seller,
         status: s.status,
-        vendidoEm: new Date().toLocaleDateString('pt-BR'),
+        vendidoEm: new Date(s.sold_at).toLocaleDateString('pt-BR'),
       })),
-      { edition: edition?.name ?? 'Edição 2026', userEmail: profile?.name ?? 'admin' },
+      {
+        edition: edition?.name ?? 'Edição 2026',
+        userName: profile?.name ?? 'admin',
+        kpis: { total, pagos, pendentes, valorRecebido, valorAReceber, cartelas: kpiCartelas, pontosAtribuidos: kpiPontosAtribuidos },
+      },
     )
   }
 
