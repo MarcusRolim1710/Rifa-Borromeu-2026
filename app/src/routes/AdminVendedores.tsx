@@ -23,13 +23,13 @@ export default function AdminVendedores() {
   const [msg, setMsg] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [changingRole, setChangingRole] = useState<string | null>(null)
-  const [audit, setAudit] = useState<AuditRow[]>([])
 
   const login = nome && sobrenome ? `${slugify(nome, sobrenome)}@borromeu.com` : ''
 
+  // audit em background (UI oculta por solicitação) — mantém coleta para futura tela dedicada
   useEffect(() => {
     if (!supabase || !me) return
-    supabase.from('profile_audit').select('id,target_user_id,actor_id,action,old_value,new_value,created_at').order('created_at', { ascending: false }).limit(20).then(({ data }) => setAudit((data as AuditRow[]) ?? []))
+    supabase.from('profile_audit').select('id').limit(1).then(() => {})
   }, [me?.id, msg])
 
   async function handleCreate(e: React.FormEvent) {
@@ -227,20 +227,6 @@ export default function AdminVendedores() {
         )}
       </div>
 
-      <div className="overflow-hidden shadow-sm" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-        <div className="px-4 py-3" style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-          <h3 className="font-semibold" style={{ color: 'var(--fg)' }}>Log de alterações (audit)</h3>
-          <p className="text-xs" style={{ color: 'var(--muted)' }}>create / update_own (nome→login) / change_role / deactivate / activate / reset_password / delete — últimos 20</p>
-        </div>
-        <div className="divide-y max-h-[320px] overflow-auto" style={{ borderColor: 'var(--border)' }}>
-          {audit.length === 0 ? <p className="p-4 text-sm" style={{ color: 'var(--muted)' }}>Sem registros ainda</p> : audit.map((a) => (
-            <div key={a.id} className="px-4 py-2 flex flex-col gap-0.5">
-              <p className="text-xs font-mono" style={{ color: 'var(--muted)' }}>{new Date(a.created_at).toLocaleString('pt-BR')} · {a.action} · alvo {a.target_user_id.slice(0, 8)} · por {a.actor_id?.slice(0, 8) ?? 'sistema'}</p>
-              <p className="text-xs break-all" style={{ color: 'var(--fg)' }}><span style={{ color: 'var(--muted)' }}>de:</span> {JSON.stringify(a.old_value)} <span style={{ color: 'var(--muted)' }}>para:</span> {JSON.stringify(a.new_value)}</p>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }
