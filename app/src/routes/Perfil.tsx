@@ -67,7 +67,7 @@ export default function Perfil() {
         <label className="block">
           <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Email (login)</span>
           <input value={email} disabled className="mt-1.5 w-full px-3.5 py-2.5 text-sm" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)' }} />
-          <span className="text-xs" style={{ color: 'var(--muted)' }}>Formato nome.sobrenome@boromeu.com</span>
+          <span className="text-xs" style={{ color: 'var(--muted)' }}>Formato nome.sobrenome@borromeu.com</span>
         </label>
         {err && <p className="text-sm px-3 py-2" style={{ color: 'var(--danger)', background: 'color-mix(in oklch, var(--danger) 8%, var(--surface))', border: '1px solid color-mix(in oklch, var(--danger) 18%, transparent)', borderRadius: 'var(--radius-sm)' }}>{err}</p>}
         {msg && <p className="text-sm px-3 py-2" style={{ color: 'var(--leaf)', background: 'color-mix(in oklch, var(--success) 10%, var(--surface))', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>{msg}</p>}

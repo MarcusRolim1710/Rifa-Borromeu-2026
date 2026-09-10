@@ -42,20 +42,21 @@ Deno.serve(async (req) => {
   const name: string = (body.name ?? "").trim();
   const phone: string | null = body.phone ?? null;
   if (!email || !name) return new Response(JSON.stringify({ error: "email e name obrigatórios" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
-  if (!email.endsWith("@boromeu.com")) return new Response(JSON.stringify({ error: "email deve ser @boromeu.com" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
+  if (!email.endsWith("@borromeu.com")) return new Response(JSON.stringify({ error: "email deve ser @borromeu.com" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
 
+  const role = (body.role === "admin" ? "admin" : "seller") as "admin" | "seller";
   const { data, error } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    user_metadata: { name, must_change_password: true },
+    user_metadata: { name, role, must_change_password: true },
   });
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
 
   const uid = data.user?.id;
   if (!uid) return new Response(JSON.stringify({ error: "user not created" }), { status: 500, headers: { ...cors, "Content-Type": "application/json" } });
 
-  const { error: pErr } = await admin.from("profiles").insert({ id: uid, role: "seller", name, phone, must_change_password: true });
+  const { error: pErr } = await admin.from("profiles").insert({ id: uid, role, name, phone, must_change_password: true });
   if (pErr) return new Response(JSON.stringify({ error: pErr.message }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
 
   return new Response(JSON.stringify({ ok: true, id: uid, email }), { headers: { ...cors, "Content-Type": "application/json" } });

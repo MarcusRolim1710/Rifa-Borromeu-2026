@@ -13,11 +13,12 @@ export default function AdminVendedores() {
   const [nome, setNome] = useState('')
   const [sobrenome, setSobrenome] = useState('')
   const [phone, setPhone] = useState('')
+  const [role, setRole] = useState<'seller' | 'admin'>('seller')
   const [err, setErr] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
 
-  const login = nome && sobrenome ? `${slugify(nome, sobrenome)}@boromeu.com` : ''
+  const login = nome && sobrenome ? `${slugify(nome, sobrenome)}@borromeu.com` : ''
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -38,7 +39,7 @@ export default function AdminVendedores() {
           const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ email: login, password: 'Borromeu2026!', name: `${nome.trim()} ${sobrenome.trim()}`, phone: phone.trim() || null }),
+            body: JSON.stringify({ email: login, password: 'Borromeu2026!', name: `${nome.trim()} ${sobrenome.trim()}`, phone: phone.trim() || null, role }),
           })
           if (res.ok) ok = true
           else {
@@ -59,11 +60,12 @@ export default function AdminVendedores() {
           p_email: login,
           p_name: `${nome.trim()} ${sobrenome.trim()}`,
           p_phone: phone.trim() || null,
-        })
+          p_role: role,
+        } as unknown as { p_email: string; p_name: string; p_phone: string | null })
         if (error) throw new Error(lastErr ? `${lastErr} | RPC: ${error.message}` : error.message)
         if (!data) throw new Error('RPC não retornou id')
       }
-      setMsg(`Vendedor ${nome} ${sobrenome} criado · login ${login} · senha Borromeu2026!`)
+      setMsg(`${role === 'admin' ? 'Admin' : 'Vendedor'} ${nome} ${sobrenome} criado · login ${login} · senha Borromeu2026!`)
       setNome(''); setSobrenome(''); setPhone('')
       refetch()
     } catch (e2) {
@@ -97,12 +99,12 @@ export default function AdminVendedores() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl" style={{ color: 'var(--fg)' }}>Vendedores</h1>
-        <p className="text-sm" style={{ color: 'var(--muted)' }}>Crie vendedor · login nome.sobrenome@boromeu.com · senha padrão Borromeu2026! · primeiro login troca obrigatória + telefone</p>
+        <p className="text-sm" style={{ color: 'var(--muted)' }}>Crie vendedor/admin · login nome.sobrenome@borromeu.com · senha padrão Borromeu2026! · primeiro login troca obrigatória + telefone</p>
       </div>
 
       <form onSubmit={handleCreate} className="p-5 md:p-6 shadow-sm space-y-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-        <h2 className="font-display font-bold" style={{ color: 'var(--fg)' }}>Novo vendedor</h2>
-        <div className="grid md:grid-cols-3 gap-3">
+        <h2 className="font-display font-bold" style={{ color: 'var(--fg)' }}>Novo usuário</h2>
+        <div className="grid md:grid-cols-4 gap-3">
           <label className="block">
             <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Nome *</span>
             <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="João" className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
@@ -115,14 +117,21 @@ export default function AdminVendedores() {
             <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Telefone (opcional)</span>
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(85) 99999-0000" className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
           </label>
+          <label className="block">
+            <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Perfil *</span>
+            <select value={role} onChange={(e) => setRole(e.target.value as 'seller' | 'admin')} className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}>
+              <option value="seller">Vendedor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-sm font-mono px-3 py-1 rounded-full" style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>{login || 'login será nome.sobrenome@boromeu.com'}</span>
+          <span className="text-sm font-mono px-3 py-1 rounded-full" style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>{login || 'login será nome.sobrenome@borromeu.com'}</span>
           <span className="text-xs" style={{ color: 'var(--muted)' }}>senha padrão Borromeu2026!</span>
         </div>
         {err && <p className="text-sm px-3 py-2" style={{ color: 'var(--danger)', background: 'color-mix(in oklch, var(--danger) 8%, var(--surface))', border: '1px solid color-mix(in oklch, var(--danger) 18%, transparent)', borderRadius: 'var(--radius-sm)' }}>{err}</p>}
         {msg && <p className="text-sm px-3 py-2" style={{ color: 'var(--leaf)', background: 'color-mix(in oklch, var(--success) 10%, var(--surface))', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>{msg}</p>}
-        <button type="submit" disabled={creating} className="btn btn-primary disabled:opacity-50">{creating ? 'Criando...' : 'Criar vendedor'}</button>
+        <button type="submit" disabled={creating} className="btn btn-primary disabled:opacity-50">{creating ? 'Criando...' : `Criar ${role === 'admin' ? 'admin' : 'vendedor'}`}</button>
       </form>
 
       <div className="overflow-hidden shadow-sm" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
