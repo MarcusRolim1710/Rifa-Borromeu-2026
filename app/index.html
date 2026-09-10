@@ -20,9 +20,13 @@
     <!-- LCP hero preload - espec SECUNDÁRIO, já pré-carregado via VitePWA -->
     <link rel="preload" as="image" href="/backgroud-capela-800.webp" imagesrcset="/backgroud-capela-640.webp 640w, /backgroud-capela-800.webp 800w, /backgroud-capela-1122.webp 1122w" imagesizes="100vw" type="image/webp" fetchpriority="high" />
     <link rel="preconnect" href="https://jxcbkqhvttiycbvwckky.supabase.co" crossorigin />
+    <!-- PWA manifest low priority to cut critical chain (was 463ms) -->
+    <link rel="manifest" href="/manifest.webmanifest" fetchpriority="low" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- registerSW deferred to avoid forced reflow / blocking LCP -->
+    <script src="/registerSW.js" defer fetchpriority="low"></script>
   </body>
 </html>

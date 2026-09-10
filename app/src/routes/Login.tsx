@@ -53,9 +53,12 @@ export default function Login() {
           style={{
             background: 'color-mix(in oklch, var(--surface) 96%, transparent)',
             backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
             border: '1px solid color-mix(in oklch, white 35%, transparent)',
             borderRadius: '20px',
             boxShadow: '0 12px 28px oklch(14% 0.03 270 / 12%)',
+            contain: 'layout paint',
+            transform: 'translateZ(0)',
           }}
         >
           <div className="flex items-center gap-3 mb-1">

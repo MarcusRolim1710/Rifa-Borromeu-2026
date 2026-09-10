@@ -27,6 +27,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: null,
       includeAssets: ['favicon.svg', 'icons.svg', 'backgroud-capela-640.webp', 'backgroud-capela-800.webp', 'backgroud-capela-1122.webp', 'backgroud-capela.jpg'],
       manifest: {
         name: 'Rifa Borromeu 2026',
