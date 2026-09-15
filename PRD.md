@@ -156,7 +156,7 @@ create table cartelas (
   created_by uuid references profiles(id),
   created_at timestamptz default now(),
   check (end_int - start_int = 19),
-  check (start_int >= 0)
+  check (start_int >= 1)
 );
 -- Impede overlap na mesma edição
 create extension if not exists btree_gist;

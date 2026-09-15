@@ -66,7 +66,7 @@ create table sale_requests (
 -- Cartelas POT
 create table cartelas (
   id uuid pk, edition_id uuid, seller_id uuid references profiles(id),
-  start_int int check >=0, end_int int, status text in ('alocado','solicitada','devolvido','parcial') default 'alocado',
+  start_int int check >=1, end_int int, status text in ('alocado','solicitada','devolvido','parcial') default 'alocado',
   solicitado_por uuid references profiles(id), solicitado_em timestamptz, created_by uuid, created_at timestamptz,
   check (end_int - start_int = 19)
 );

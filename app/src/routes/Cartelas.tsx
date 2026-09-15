@@ -132,7 +132,7 @@ export default function Cartelas() {
     const e = Number(endStr)
     if (!Number.isFinite(s) || !Number.isFinite(e)) return setErr('Informe início e fim numéricos')
     if (e < s) return setErr('Fim deve ser >= início')
-    if ((e - s + 1) % 20 !== 0) return setErr(`Range ${s}-${e} tem ${e - s + 1} números — deve ser múltiplo de 20 (ex: 200-399 = 200 números = 10 cartelas)`)
+    if ((e - s + 1) % 20 !== 0) return setErr(`Range ${s}-${e} tem ${e - s + 1} números — deve ser múltiplo de 20 (ex: 1-20 = 20 números = 1 cartela, 1-40 = 40 números = 2 cartelas)`)
     const targetSeller = sellerId || vendedores[0]?.id
     if (!targetSeller) return setErr('Selecione vendedor')
     if (!edition) return setErr('Edição não encontrada')
@@ -300,16 +300,16 @@ export default function Cartelas() {
 
         <div className="p-5 md:p-6 shadow-sm" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
           <h2 className="font-display font-bold" style={{ color: 'var(--fg)' }}>Nova atribuição (lote)</h2>
-          <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>Informe início e fim – múltiplo de 20 (ex: 200-399 = 10 cartelas). {placeholderInfo}</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>Informe início e fim – múltiplo de 20 (ex: 1-20 = 1 cartela, 21-40 = 1 cartela, 1-40 = 2 cartelas). {placeholderInfo}</p>
           {allGaps.length > 0 && <p className="text-xs mt-1" style={{ color: 'var(--accent-strong)' }}>Buracos disponíveis: {allGaps.map((g) => `${g.start}-${g.end}`).join(', ')}</p>}
           <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-3 mt-4">
             <label className="block">
               <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Início</span>
-              <input value={startStr} onChange={(e) => setStartStr(e.target.value)} placeholder={nextGap ? String(nextGap.start) : '0'} className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
+              <input value={startStr} onChange={(e) => setStartStr(e.target.value)} placeholder={nextGap ? String(nextGap.start) : '1'} className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
             </label>
             <label className="block">
               <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--muted)' }}>Fim</span>
-              <input value={endStr} onChange={(e) => setEndStr(e.target.value)} placeholder={nextGap ? String(nextGap.end) : '19'} className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
+              <input value={endStr} onChange={(e) => setEndStr(e.target.value)} placeholder={nextGap ? String(nextGap.end) : '20'} className="mt-1.5 w-full px-3.5 py-2.5 text-sm focus:outline-none" style={{ borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }} />
               <span className="text-xs" style={{ color: 'var(--muted)' }}>{startStr && endStr && Number.isFinite(Number(startStr)) && Number.isFinite(Number(endStr)) ? `${Math.floor((Number(endStr)-Number(startStr)+1)/20)} cartelas • ${Number(endStr)-Number(startStr)+1} números` : ' '}</span>
             </label>
             <label className="block">

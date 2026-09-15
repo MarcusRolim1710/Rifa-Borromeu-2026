@@ -111,8 +111,9 @@ export function useCreateCartelasLote() {
     mutationFn: async (payload: { edition_id: string; seller_id: string; start_int: number; end_int: number }) => {
       if (!supabase) throw new Error('Serviço indisponível')
       if (payload.end_int < payload.start_int) throw new Error('Fim deve ser >= início')
+      if (payload.start_int < 1) throw new Error('Início deve ser >= 1 (cartelas começam em 1-20)')
       const total = payload.end_int - payload.start_int + 1
-      if (total % 20 !== 0) throw new Error('Range deve ser múltiplo de 20 (ex: 200-399 = 200 números = 10 cartelas)')
+      if (total % 20 !== 0) throw new Error('Range deve ser múltiplo de 20 (ex: 1-20 = 20 números = 1 cartela, 1-40 = 40 números = 2 cartelas)')
       const rows = []
       for (let s = payload.start_int; s <= payload.end_int; s += 20) {
         rows.push({ edition_id: payload.edition_id, seller_id: payload.seller_id, start_int: s, end_int: s + 19 })
@@ -324,12 +325,12 @@ export function useApproveSaleRequest() {
   })
 }
 
-/** Encontra próximo gap disponível (buraco devolvido) ou max+1 */
+/** Encontra próximo gap disponível (buraco devolvido) ou max+1 — base 1-20 */
 export function findNextGap(cartelas: Pick<CartelaRow, 'start_int' | 'end_int' | 'status'>[]): { start: number; end: number; isGap: boolean } | null {
   const active = cartelas.filter((c) => c.status !== 'devolvido').sort((a, b) => a.start_int - b.start_int)
-  if (active.length === 0) return { start: 0, end: 19, isGap: false }
-  // procura buraco entre 0 e max
-  let cursor = 0
+  if (active.length === 0) return { start: 1, end: 20, isGap: false }
+  // procura buraco entre 1 e max
+  let cursor = 1
   for (const c of active) {
     if (c.start_int > cursor) {
       const gapLen = c.start_int - cursor
@@ -343,7 +344,7 @@ export function findNextGap(cartelas: Pick<CartelaRow, 'start_int' | 'end_int' |
 export function findAllGaps(cartelas: Pick<CartelaRow, 'start_int' | 'end_int' | 'status'>[], maxGaps = 3) {
   const active = cartelas.filter((c) => c.status !== 'devolvido').sort((a, b) => a.start_int - b.start_int)
   const gaps: { start: number; end: number }[] = []
-  let cursor = 0
+  let cursor = 1
   for (const c of active) {
     if (c.start_int > cursor) {
       for (let s = cursor; s + 19 < c.start_int && gaps.length < maxGaps; s += 20) {

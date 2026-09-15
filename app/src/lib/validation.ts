@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const vendaSchema = z.object({
-  number_int: z.number().int().min(0),
+  number_int: z.number().int().min(1),
   buyer_name: z
     .string()
     .trim()
@@ -16,7 +16,7 @@ export const vendaSchema = z.object({
 })
 
 export const cartelaSchema = z.object({
-  start_int: z.number().int().min(0),
+  start_int: z.number().int().min(1),
   seller_id: z.string().uuid(),
 })
 // end = start + 19 calculado no client
